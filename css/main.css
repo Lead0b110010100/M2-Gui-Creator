@@ -1,0 +1,362 @@
+@charset "UTF-8";
+
+body{
+	background: url("../images/background.jpg") repeat scroll 0 0 #f1f3f6;
+	color: #77787b;
+	font: 11px Helvetica,Arial,Geneva,sans-serif;
+	margin: 0;
+	padding: 25px 0 0;
+}
+div#container {
+	margin:0 auto;
+	width: 1200px;
+	height: 860px;
+}
+
+div#header {
+	border-bottom: 2px solid #d8d8d8;
+	height: 205px;
+	width: 1200px;
+	float:left;
+}
+
+div#guiElements {
+	border-left: 2px solid #d8d8d8;
+	float: left;
+	height: 600px;
+	width: 198px;
+	background: none repeat scroll 0 0 #fafafa;
+}
+
+div#guiElementOptions {
+	border-right: 2px solid #d8d8d8;
+	float: left;
+	height: 600px;
+	width: 198px;
+	background: none repeat scroll 0 0 #fafafa;
+	overflow-x: hidden;
+}
+
+div#mainPaper {
+	float: left;
+	height: 600px;
+	width: 800px;
+	overflow: auto;
+	background: none repeat scroll 0 0 #fafafa;
+}
+
+div#debug {
+	height: 50px;
+	width: 198px;
+}
+
+div#footer {
+	border-top: 2px solid #d8d8d8;
+	float: left;
+	height: 49px;
+	width: 1200px;
+}
+
+#mainNav {
+	font-size: 12px;
+	list-style: outside none none;
+	text-align: left;
+	text-transform: uppercase;
+	margin-left: -40px;
+}
+ul#mainNav li a {
+	color: #77787b;
+	display: block;
+	list-style: outside none none;
+	margin-bottom: 30px;
+	width: 190px;
+	text-decoration: none;
+}
+ul#mainNav li a:hover {
+	color: #f8931f;
+	border-right: 1px dotted #f8931f;
+	border-left: 1px dotted #f8931f;
+	padding-left: 2px;
+}
+.current {
+	color: #f8931f;
+}
+.navNumber {
+	font-size: 35px;
+	margin-top: -5px;
+	float: left;
+	margin-right: 8px;
+}
+#mainNav .top {
+	color: #77787b;
+	letter-spacing: 3px;
+	border-bottom: 1px dotted #d8d8d8;
+}
+
+#mainNav .bottom {
+	color: #9d9ea0;
+	font-size: 11px;
+	text-transform: lowercase;
+}
+
+#mainFooter {
+	text-align: center;
+	margin-top: 5px;
+}
+#logo{
+	margin: 0 auto;
+	width: 266px;
+}
+#title  {
+	text-align:center;
+}
+#title a{
+	color: #77787b;
+	text-decoration: none;
+}
+#title h1 {
+	font-size:25px;
+	letter-spacing: 10px;
+}
+
+#title h1::first-letter {
+	color: #f8931f;
+} 
+
+div#window h3 { 
+	text-align: center; 
+	margin: 0; 
+	margin-bottom: 10px; 
+}
+
+div#window { 
+	background-position: top left; 
+	width: 780px; 
+	height: 580px; 
+	margin-top:10px;
+}
+.guiElement {
+	position: absolute;
+}
+
+#menu{
+	
+}
+
+.board { 
+	width: 100px; 
+	height: 100px;  
+	background-image: url(../images/gui/board/board_base.png);
+	background-repeat: repeat;
+	cursor: move;
+}
+
+.board #corner-left-bottom { 
+	width: 32px; 
+	height: 32px;  
+	left:-2px;
+	bottom:-2px;
+	background-image: url(../images/gui/board_2/board_corner_leftbottom.png);
+	cursor: not-allowed;
+}
+.board #corner-left-top { 
+	width: 32px; 
+	height: 32px;  
+	left: -2px;
+	top: -2px;
+	background-image: url(../images/gui/board_2/board_corner_lefttop.png);
+	cursor: not-allowed;
+}
+.board #corner-right-bottom { 
+	width: 32px; 
+	height: 32px;  
+	bottom:-2px;
+	right:-2px;
+	background-image: url(../images/gui/board_2/board_corner_rightbottom.png);
+	cursor: se-resize;
+}
+.board #corner-right-top { 
+	width: 32px; 
+	height: 32px;  
+	top:-2px;
+	right:-2px;
+	background-image: url(../images/gui/board_2/board_corner_righttop.png);
+	cursor: not-allowed;
+}
+.board #line-bottom { 
+	height: 32px;  
+	background-image: url(../images/gui/board_2/board_line_bottom.png);
+	background-repeat: repeat;
+	width: -moz-calc(100% - 60px);
+	width: -webkit-calc(100% - 60px);
+	width: calc(100% - 60px);
+	left: 30px;
+	bottom:-2px;
+	cursor: s-resize;
+}
+.board #line-top { 
+	height: 32px;  
+	background-image: url(../images/gui/board_2/board_line_top.png);
+	background-repeat: repeat;
+	left: 30px;
+	width: -moz-calc(100% - 60px);
+	width: -webkit-calc(100% - 60px);
+	width: calc(100% - 60px);
+	top: -2px;
+	cursor: not-allowed;
+
+}
+.board #line-left { 
+	width: 32px;
+	background-image: url(../images/gui/board_2/board_line_left.png);
+	background-repeat: repeat;
+	top: 30px;
+	left: -2px;
+	height: -moz-calc(100% - 60px);
+	height: -webkit-calc(100% - 60px);
+	height: calc(100% - 60px);
+	cursor: not-allowed;
+}
+.board #line-right { 
+	width: 32px; 
+	background-image: url(../images/gui/board_2/board_line_right.png);
+	background-repeat: repeat;
+	top: 30px;
+	right: -2px;	
+	height: -moz-calc(100% - 60px);
+	height: -webkit-calc(100% - 60px);
+	height: calc(100% - 60px);
+	cursor: e-resize;
+	
+}
+
+.thinboard { 
+	width: 100px; 
+	height: 100px;
+	background-image: url(../images/gui/board/thinboard_base.png);
+	background-repeat: repeat;
+	-moz-box-shadow: 0 0 1px 3px  #6c6359 inset;
+	-webkit-box-shadow: 0 0 1px 3px  #6c6359 inset;
+	box-shadow: 0 0 1px 3px  #6c6359 inset;
+}
+
+button.addElement {
+	background-color: unset;
+	background-image: url(../images/gui/icon/add_norm.png);
+	border: medium none;
+	height: 19px;
+	width: 19px;
+	cursor: pointer;
+}
+button:hover.addElement {
+	background-color: unset;
+	background-image: url(../images/gui/icon/add_hover.png);
+	border: medium none;
+	height: 19px;
+	width: 19px;
+}
+
+button.deleteElement {
+	background-color: unset;
+	background-image: url(../images/gui/icon/delete_norm.png);
+	border: medium none;
+	height: 19px;
+	width: 19px;
+	cursor: pointer;
+}
+button:hover.deleteElement {
+	background-color: unset;
+	background-image: url(../images/gui/icon/delete_hover.png);
+	border: medium none;
+	height: 19px;
+	width: 19px;
+}
+
+#newBoardButton {
+	float:left;
+}
+
+hr.first_down{
+	border: none;
+	border-top: 1px solid #77787b;
+	height: 1px;
+	width: 800px;
+}
+
+hr.second_down{
+	border: none;
+	border-top: 1px solid #77787b;
+	height: 1px;
+	width: 650px;
+	margin-top: -4px;
+}
+
+hr.first_top{
+	border: none;
+	border-top: 1px solid #77787b;
+	height: 1px;
+	width: 650px;
+}
+
+hr.second_top{
+	border: none;
+	border-top: 1px solid #77787b;
+	height: 1px;
+	width: 800px;
+	margin-top: -4px;
+}
+
+button#newBoardButton {
+	background-color: unset;
+	background-image: url(../images/gui/icon/new_norm.png);
+	border: medium none;
+	height: 40px;
+	width: 40px;
+	cursor: pointer;
+}
+button:hover#newBoardButton {
+	background-color: unset;
+	background-image: url(../images/gui/icon/new_hover.png);
+	border: medium none;
+	height: 40px;
+	width: 40px;
+}
+
+button#saveScriptButton {
+	background-color: unset;
+	background-image: url(../images/gui/icon/save_norm.png);
+	border: medium none;
+	height: 40px;
+	width: 40px;
+	cursor: pointer;
+}
+button:hover#saveScriptButton {
+	background-color: unset;
+	background-image: url(../images/gui/icon/save_hover.png);
+	border: medium none;
+	height: 40px;
+	width: 40px;
+}
+
+#MenueIcons {
+	float:left;
+}
+
+.hiddenElements{
+	display:none;
+}
+
+.elementsTable{
+	text-align: left;
+}
+.elementsTable td.first{
+	min-width:165px;
+}
+
+.previewElement {
+	overflow-x: auto;
+	width: 165px;
+}
+
+.optionField{
+}

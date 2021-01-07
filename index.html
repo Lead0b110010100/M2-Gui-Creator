@@ -1,0 +1,135 @@
+<html>
+<head>
+<title>ProfEnte's Gui Creator ALPHA v1.2</title>
+
+<meta name="description" content="ProfessorEnte's Gui Creator">
+<meta name="author" content="Dennis">
+<meta name="keywords" content="ProfEnte">
+<meta charset="utf-8"> 
+
+<!-- load stylesheets -->
+<link href="http://code.jquery.com/ui/1.11.2/themes/smoothness/jquery-ui.css" rel="stylesheet">
+<link rel="stylesheet" type="text/css" href="css/main.css">
+
+<!-- load jquery & jquery-ui -->
+<script src="http://code.jquery.com/jquery-1.10.2.js"></script>
+<script src="http://code.jquery.com/ui/1.11.2/jquery-ui.js"></script>
+
+<!-- load functions -->
+<script language="javascript" type="text/javascript" src="scripts/functions/objects.js"></script>
+<script language="javascript" type="text/javascript" src="scripts/functions/selectbox.js"></script>
+<script language="javascript" type="text/javascript" src="scripts/functions/graphical.js"></script>
+
+<!-- load configs -->
+<!-- <script language="javascript" type="text/javascript" src="scripts/config/guiElements.js"></script> -->
+
+<!-- load main file -->
+<script language="javascript" type="text/javascript" src="scripts/main.js"></script>
+
+</head>
+<body>
+    <div id="container">
+        <div id="header">
+            <div id="logo">
+                <img src="images/metin2_logo.png">
+            </div>
+            <div id="title">
+                <hr class="first_top">
+                <hr class="second_top">
+                <h1>ProfEnte's Gui Creator ALPHA v1.2</h1>
+                <hr class="first_down">
+                <hr class="second_down">
+            </div>
+
+            <div id="menu">
+                <button id="newBoardButton" title="Start a new project" onclick="newProject()"></button>
+                <div class="hiddenElements">
+                    <button id="saveScriptButton" title='Save script as "uiscript" type' onclick="createScript('uiscript')"></button>
+                </div>
+            </div>
+        </div>
+        <div id="guiElements">
+            <table class="elementsTable hiddenElements">
+                <tr><th>Parent</th></tr>
+                <tr>
+                    <td>
+                        <select name="parentList" id="parentList">
+                        </select>
+                    </td>
+                </tr>
+                <tr><th>Boards</th></tr>
+                <tr>
+                    <td class="first">
+                        <select name="boardType" id="boardType" onChange="setPreview('parentElement',this.options[this.selectedIndex].text)">
+                            <option selected="selected" name="board">board</option>
+                            <option value="thinboard">thinboard</option>
+                        </select>
+                    </td>
+                    <td>
+                        <button class="addElement" title='Add board element' onclick="addElement('board')"></button>
+                    </td>
+                    <tr>
+                        <td><div class="previewElement"><img id="parentPreview" src="images/gui/board/board.png"></div></td>
+                    </tr>
+                </tr>
+
+                <tr><th>Buttons</th></tr>
+                <tr>
+                    <td class="first">
+                        <select name="buttonType" id="buttonType" onChange="setPreview('button',this.options[this.selectedIndex].text);">
+                            <option selected="selected">xsmall_button</option>
+                            <option>small_thin_button</option>
+                            <option>small_button</option>
+                            <option>middle_button</option>
+                            <option>big_button</option>
+                            <option>large_button</option>
+                            <option>xlarge_thin_button</option>
+                            <option>xlarge_button</option>
+                            <option>close_button</option>
+                            <option>minimize_button</option>
+                        </select>
+                    </td>
+                    <td>
+                        <button class="addElement" title='Add button element' onclick="addElement('button')"></button>
+                    </td>
+                    <tr>
+                        <td><div class="previewElement"><img id="buttonPreview" src="images/gui/button/xsmall_button.png"></div></td>
+                    </tr>
+                </tr>
+                <tr><th>Labels</th></tr>
+                <tr>
+                    <td><button class="addElement" title='Add label element' onclick="addElement('label')"></button><td>
+                </tr>
+
+            </table>
+        </div>
+        <div id="mainPaper"></div>
+        <div id="guiElementOptions">
+            <div id="debug" class="hiddenElements">
+            <span>Mouse Position:<span>
+            <span id="mousePosX" > x: 0</span>
+            <span id="mousePosY" > y: 0</span>
+            </div>
+            <table class="elementsTable hiddenElements">
+                <tr><th>Elementlist</th></tr>
+                <tr>
+                    <td>
+                        <select name="elementList" id="elementList"  onchange="createElementOptions(this.options[this.selectedIndex].value);blink(this.options[this.selectedIndex].value)">
+                        </select>
+                    </td>
+                    <td><button class="deleteElement" title='Delete element' onclick="removeSelectedElement()"></button></td>
+                </tr>
+            </table>
+            <div id="scriptOptions"></div>
+        </div>
+        <div id="footer">
+            <div id="mainFooter">
+                Copyright © 2014 - 2015 ProfessorEnte<br/>
+                Graphics by Ymir Entertainment and Lord Poccix
+                <hr class="first_down">
+                <hr class="second_down">
+            </div>
+        </div>
+    </div>
+</body>
+</html>
