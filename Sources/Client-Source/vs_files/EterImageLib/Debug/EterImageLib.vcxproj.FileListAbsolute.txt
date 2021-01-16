@@ -1,2 +1,0 @@
-C:\Users\Lead0\Desktop\M2-Gui-Creator\Sources\Client-Source\vs_files\EterImageLib\Debug\EterImageLib.lib
-C:\Users\Lead0\Desktop\M2-Gui-Creator\Sources\Client-Source\vs_files\EterImageLib\Debug\EterImageLib.pdb
