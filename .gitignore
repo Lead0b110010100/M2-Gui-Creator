@@ -16,6 +16,6 @@
 
 .vs
 
-Release
-Distribute
-Debug
+Sources/Client-Source/source/*/Release
+Sources/Client-Source/source/*/Distribute
+Sources/Client-Source/source/*/Debug
