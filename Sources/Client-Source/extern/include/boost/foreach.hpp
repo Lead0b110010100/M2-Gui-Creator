@@ -20,7 +20,7 @@
 #ifndef BOOST_FOREACH
 
 // MS compatible compilers support #pragma once
-#if defined(_MSC_VER) && (_MSC_VER >= 1020)
+#if defined(_MSC_VER)
 # pragma once
 #endif
 
@@ -30,9 +30,16 @@
 #include <boost/config.hpp>
 #include <boost/detail/workaround.hpp>
 
+// Define a compiler generic null pointer value
+#if defined(BOOST_NO_NULLPTR)
+#define BOOST_FOREACH_NULL 0
+#else
+#define BOOST_FOREACH_NULL nullptr
+#endif
+
 // Some compilers let us detect even const-qualified rvalues at compile-time
 #if !defined(BOOST_NO_CXX11_RVALUE_REFERENCES)                                                   \
- || BOOST_WORKAROUND(BOOST_MSVC, >= 1310) && !defined(_PREFAST_)                                 \
+ || defined(BOOST_MSVC) && !defined(_PREFAST_)                                 \
  || (BOOST_WORKAROUND(__GNUC__, == 4) && (__GNUC_MINOR__ <= 5) && !defined(BOOST_INTEL) &&       \
                                                                   !defined(BOOST_CLANG))         \
  || (BOOST_WORKAROUND(__GNUC__, == 3) && (__GNUC_MINOR__ >= 4) && !defined(BOOST_INTEL) &&       \
@@ -42,8 +49,7 @@
 // Some compilers allow temporaries to be bound to non-const references.
 // These compilers make it impossible to for BOOST_FOREACH to detect
 // temporaries and avoid reevaluation of the collection expression.
-# if BOOST_WORKAROUND(BOOST_MSVC, <= 1300)                                                      \
-  || BOOST_WORKAROUND(__BORLANDC__, < 0x593)                                                    \
+# if BOOST_WORKAROUND(BOOST_BORLANDC, < 0x593)                                                    \
   || (BOOST_WORKAROUND(BOOST_INTEL_CXX_VERSION, <= 700) && defined(_MSC_VER))                   \
   || BOOST_WORKAROUND(__SUNPRO_CC, < 0x5100)                                                    \
   || BOOST_WORKAROUND(__DECCXX_VER, <= 60590042)
@@ -55,13 +61,11 @@
   || defined(BOOST_NO_SFINAE)                                                                   \
   || BOOST_WORKAROUND(BOOST_MSVC, BOOST_TESTED_AT(1400))                                        \
   || BOOST_WORKAROUND(BOOST_INTEL_WIN, BOOST_TESTED_AT(1400))                                   \
-  || BOOST_WORKAROUND(__GNUC__, < 3)                                                            \
-  || (BOOST_WORKAROUND(__GNUC__, == 3) && (__GNUC_MINOR__ <= 2))                                \
   || (BOOST_WORKAROUND(__GNUC__, == 3) && (__GNUC_MINOR__ <= 3) && defined(__APPLE_CC__))       \
   || BOOST_WORKAROUND(__IBMCPP__, BOOST_TESTED_AT(600))                                         \
   || BOOST_WORKAROUND(__MWERKS__, BOOST_TESTED_AT(0x3206))                                      \
   || BOOST_WORKAROUND(__SUNPRO_CC, >= 0x5100)                                                   \
-  || BOOST_WORKAROUND(__BORLANDC__, BOOST_TESTED_AT(0x590))
+  || BOOST_WORKAROUND(BOOST_BORLANDC, BOOST_TESTED_AT(0x590))
 #  define BOOST_FOREACH_NO_CONST_RVALUE_DETECTION
 # else
 #  define BOOST_FOREACH_RUN_TIME_CONST_RVALUE_DETECTION
@@ -349,9 +353,7 @@ struct foreach_iterator
     //
     // To treat the container as an array, use boost::as_array() in <boost/range/as_array.hpp>,
     // as in BOOST_FOREACH( char ch, boost::as_array("hello") ) ...
-    #if !defined(BOOST_MSVC) || BOOST_MSVC > 1300
     BOOST_MPL_ASSERT_MSG( (!is_char_array<T>::value), IS_THIS_AN_ARRAY_OR_A_NULL_TERMINATED_STRING, (T&) );
-    #endif
 
     // If the type is a pointer to a null terminated string (as opposed 
     // to an array type), there is no ambiguity.
@@ -380,9 +382,7 @@ struct foreach_reverse_iterator
     //
     // To treat the container as an array, use boost::as_array() in <boost/range/as_array.hpp>,
     // as in BOOST_FOREACH( char ch, boost::as_array("hello") ) ...
-    #if !defined(BOOST_MSVC) || BOOST_MSVC > 1300
     BOOST_MPL_ASSERT_MSG( (!is_char_array<T>::value), IS_THIS_AN_ARRAY_OR_A_NULL_TERMINATED_STRING, (T&) );
-    #endif
 
     // If the type is a pointer to a null terminated string (as opposed 
     // to an array type), there is no ambiguity.
@@ -405,10 +405,16 @@ struct foreach_reference
 // encode_type
 //
 template<typename T>
-inline type2type<T> *encode_type(T &, boost::mpl::false_ *) { return 0; }
+inline type2type<T> *encode_type(T &, boost::false_type*) { return 0; }
 
 template<typename T>
-inline type2type<T, const_> *encode_type(T const &, boost::mpl::true_ *) { return 0; }
+inline type2type<T, const_> *encode_type(T const &, boost::true_type*) { return 0; }
+
+template<typename T>
+inline type2type<T> *encode_type(T &, boost::mpl::false_*) { return 0; }
+
+template<typename T>
+inline type2type<T, const_> *encode_type(T const &, boost::mpl::true_*) { return 0; }
 
 ///////////////////////////////////////////////////////////////////////////////
 // set_false
@@ -430,7 +436,7 @@ inline T *&to_ptr(T const &)
 }
 
 // Borland needs a little extra help with arrays
-#if BOOST_WORKAROUND(__BORLANDC__, BOOST_TESTED_AT(0x564))
+#if BOOST_WORKAROUND(BOOST_BORLANDC, BOOST_TESTED_AT(0x564))
 template<typename T,std::size_t N>
 inline T (*&to_ptr(T (&)[N]))[N]
 {
@@ -910,7 +916,7 @@ rderef(auto_any_t cur, type2type<T, C> *)
 
 // A sneaky way to get the type of the collection without evaluating the expression
 #define BOOST_FOREACH_TYPEOF(COL)                                                               \
-    (true ? 0 : boost::foreach_detail_::encode_type(COL, boost::foreach_detail_::is_const_(COL)))
+    (true ? BOOST_FOREACH_NULL : boost::foreach_detail_::encode_type(COL, boost::foreach_detail_::is_const_(COL)))
 
 // returns true_* if the type is noncopyable
 #define BOOST_FOREACH_IS_NONCOPYABLE(COL)                                                       \
@@ -940,7 +946,7 @@ rderef(auto_any_t cur, type2type<T, C> *)
     (COL)
 
 # define BOOST_FOREACH_SHOULD_COPY(COL)                                                         \
-    (true ? 0 : boost::foreach_detail_::or_(                                                    \
+    (true ? BOOST_FOREACH_NULL : boost::foreach_detail_::or_(                                                    \
         BOOST_FOREACH_IS_RVALUE(COL)                                                            \
       , BOOST_FOREACH_IS_LIGHTWEIGHT_PROXY(COL)))
 
@@ -963,11 +969,11 @@ rderef(auto_any_t cur, type2type<T, C> *)
 // If the type happens to be a lightweight proxy, always make a copy.
 # define BOOST_FOREACH_SHOULD_COPY(COL)                                                         \
     (boost::foreach_detail_::should_copy_impl(                                                  \
-        true ? 0 : boost::foreach_detail_::or_(                                                 \
+        true ? BOOST_FOREACH_NULL : boost::foreach_detail_::or_(                                                 \
             boost::foreach_detail_::is_array_(COL)                                              \
           , BOOST_FOREACH_IS_NONCOPYABLE(COL)                                                   \
           , boost::foreach_detail_::not_(boost::foreach_detail_::is_const_(COL)))               \
-      , true ? 0 : BOOST_FOREACH_IS_LIGHTWEIGHT_PROXY(COL)                                      \
+      , true ? BOOST_FOREACH_NULL : BOOST_FOREACH_IS_LIGHTWEIGHT_PROXY(COL)                                      \
       , &BOOST_FOREACH_ID(_foreach_is_rvalue)))
 
 #elif !defined(BOOST_FOREACH_NO_RVALUE_DETECTION)
@@ -986,7 +992,7 @@ rderef(auto_any_t cur, type2type<T, C> *)
 // Determine whether the collection expression is an lvalue or an rvalue.
 // NOTE: this gets the answer wrong for const rvalues.
 # define BOOST_FOREACH_SHOULD_COPY(COL)                                                         \
-    (true ? 0 : boost::foreach_detail_::or_(                                                    \
+    (true ? BOOST_FOREACH_NULL : boost::foreach_detail_::or_(                                                    \
         boost::foreach_detail_::is_rvalue_((COL), 0)                                            \
       , BOOST_FOREACH_IS_LIGHTWEIGHT_PROXY(COL)))
 
@@ -1005,7 +1011,7 @@ rderef(auto_any_t cur, type2type<T, C> *)
 
 // Can't use rvalues with BOOST_FOREACH (unless they are lightweight proxies)
 # define BOOST_FOREACH_SHOULD_COPY(COL)                                                         \
-    (true ? 0 : BOOST_FOREACH_IS_LIGHTWEIGHT_PROXY(COL))
+    (true ? BOOST_FOREACH_NULL : BOOST_FOREACH_IS_LIGHTWEIGHT_PROXY(COL))
 
 #endif
 

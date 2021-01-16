@@ -4,6 +4,11 @@
 // Copyright (c) 2008-2012 Barend Gehrels, Amsterdam, the Netherlands.
 // Copyright (c) 2009-2012 Mateusz Loskot, London, UK.
 
+// This file was modified by Oracle on 2018.
+// Modifications copyright (c) 2018, Oracle and/or its affiliates.
+
+// Contributed and/or modified by Adam Wulkiewicz, on behalf of Oracle
+
 // Parts of Boost.Geometry are redesigned from Geodan's Geographic Library
 // (geolib/GGL), copyright (c) 1995-2010 Geodan, Amsterdam, the Netherlands.
 
@@ -15,16 +20,14 @@
 #define BOOST_GEOMETRY_STRATEGIES_CARTESIAN_DISTANCE_PYTHAGORAS_HPP
 
 
-#include <boost/mpl/if.hpp>
-#include <boost/type_traits.hpp>
-
 #include <boost/geometry/core/access.hpp>
+
+#include <boost/geometry/geometries/concepts/point_concept.hpp>
 
 #include <boost/geometry/strategies/distance.hpp>
 
+#include <boost/geometry/util/math.hpp>
 #include <boost/geometry/util/calculation_type.hpp>
-
-
 
 
 namespace boost { namespace geometry
@@ -85,7 +88,9 @@ public :
           <
               Point1,
               Point2,
-              CalculationType
+              CalculationType,
+              double,
+              double
           >
     {};
 
@@ -93,8 +98,8 @@ public :
     static inline typename calculation_type<Point1, Point2>::type
     apply(Point1 const& p1, Point2 const& p2)
     {
-        BOOST_CONCEPT_ASSERT( (concept::ConstPoint<Point1>) );
-        BOOST_CONCEPT_ASSERT( (concept::ConstPoint<Point2>) );
+        BOOST_CONCEPT_ASSERT( (concepts::ConstPoint<Point1>) );
+        BOOST_CONCEPT_ASSERT( (concepts::ConstPoint<Point2>) );
 
         // Calculate distance using Pythagoras
         // (Leave comment above for Doxygen)
@@ -156,7 +161,7 @@ public :
     apply(P1 const& p1, P2 const& p2)
     {
         // The cast is necessary for MSVC which considers sqrt __int64 as an ambiguous call
-        return std::sqrt
+        return math::sqrt
             (
                  boost::numeric_cast<typename calculation_type<P1, P2>::type>
                     (
@@ -268,7 +273,10 @@ public :
 
 
 template <typename Point1, typename Point2>
-struct default_strategy<point_tag, Point1, Point2, cartesian_tag, cartesian_tag, void>
+struct default_strategy
+    <
+        point_tag, point_tag, Point1, Point2, cartesian_tag, cartesian_tag
+    >
 {
     typedef pythagoras<> type;
 };

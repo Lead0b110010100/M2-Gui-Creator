@@ -10,26 +10,13 @@
 #pragma once
 #endif
 
-#include <boost/spirit/include/phoenix_core.hpp>
-
-#ifndef BOOST_SPIRIT_USE_PHOENIX_V3
-
-#if !defined(SPIRIT_ARGUMENTS_LIMIT)
-# define SPIRIT_ARGUMENTS_LIMIT PHOENIX_LIMIT
-#endif
-#if !defined(SPIRIT_ATTRIBUTES_LIMIT)
-# define SPIRIT_ATTRIBUTES_LIMIT PHOENIX_LIMIT
-#endif
-
-#else
+#include <boost/phoenix/core/limits.hpp>
 
 #if !defined(SPIRIT_ARGUMENTS_LIMIT)
 # define SPIRIT_ARGUMENTS_LIMIT BOOST_PHOENIX_LIMIT
 #endif
 #if !defined(SPIRIT_ATTRIBUTES_LIMIT)
 # define SPIRIT_ATTRIBUTES_LIMIT BOOST_PHOENIX_LIMIT
-#endif
-
 #endif
 
 #endif

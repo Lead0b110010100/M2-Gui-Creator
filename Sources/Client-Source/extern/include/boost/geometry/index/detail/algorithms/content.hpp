@@ -2,7 +2,11 @@
 //
 // n-dimensional content (hypervolume) - 2d area, 3d volume, ...
 //
-// Copyright (c) 2011-2013 Adam Wulkiewicz, Lodz, Poland.
+// Copyright (c) 2011-2014 Adam Wulkiewicz, Lodz, Poland.
+//
+// This file was modified by Oracle on 2020.
+// Modifications copyright (c) 2020 Oracle and/or its affiliates.
+// Contributed and/or modified by Adam Wulkiewicz, on behalf of Oracle
 //
 // Use, modification and distribution is subject to the Boost Software License,
 // Version 1.0. (See accompanying file LICENSE_1_0.txt or copy at
@@ -10,6 +14,8 @@
 
 #ifndef BOOST_GEOMETRY_INDEX_DETAIL_ALGORITHMS_CONTENT_HPP
 #define BOOST_GEOMETRY_INDEX_DETAIL_ALGORITHMS_CONTENT_HPP
+
+#include <boost/geometry/core/static_assert.hpp>
 
 namespace boost { namespace geometry { namespace index { namespace detail {
 
@@ -24,11 +30,11 @@ struct default_content_result
 
 namespace dispatch {
 
-template <typename Box, size_t CurrentDimension>
+template <typename Box,
+          std::size_t CurrentDimension = dimension<Box>::value>
 struct content_box
 {
     BOOST_STATIC_ASSERT(0 < CurrentDimension);
-    //BOOST_STATIC_ASSERT(CurrentDimension <= traits::dimension<Box>::value);
 
     static inline typename detail::default_content_result<Box>::type apply(Box const& b)
     {
@@ -49,7 +55,9 @@ struct content_box<Box, 1>
 template <typename Indexable, typename Tag>
 struct content
 {
-    BOOST_MPL_ASSERT_MSG(false, NOT_IMPLEMENTED_FOR_THIS_INDEXABLE_AND_TAG, (Indexable, Tag));
+    BOOST_GEOMETRY_STATIC_ASSERT_FALSE(
+        "Not implemented for this Indexable and Tag.",
+        Indexable, Tag);
 };
 
 template <typename Indexable>
@@ -66,7 +74,7 @@ struct content<Indexable, box_tag>
 {
     static typename default_content_result<Indexable>::type apply(Indexable const& b)
     {
-        return dispatch::content_box<Indexable, dimension<Indexable>::value>::apply(b);
+        return dispatch::content_box<Indexable>::apply(b);
     }
 };
 
@@ -75,9 +83,11 @@ struct content<Indexable, box_tag>
 template <typename Indexable>
 typename default_content_result<Indexable>::type content(Indexable const& b)
 {
-    return dispatch::content<Indexable,
-                             typename tag<Indexable>::type
-                            >::apply(b);
+    return dispatch::content
+            <
+                Indexable,
+                typename tag<Indexable>::type
+            >::apply(b);
 }
 
 }}}} // namespace boost::geometry::index::detail

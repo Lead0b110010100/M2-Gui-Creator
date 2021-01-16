@@ -10,6 +10,7 @@
 #include <boost/math/tools/precision.hpp>
 #include <boost/math/tools/promotion.hpp>
 #include <boost/math/policies/error_handling.hpp>
+#include <boost/math/special_functions/math_fwd.hpp>
 
 namespace boost{ namespace math{
 
@@ -136,7 +137,7 @@ inline typename tools::promote_args<T, U, V>::type jacobi_elliptic(T k, U theta,
       *pcn = policies::checked_narrowing_cast<result_type, Policy>(cn, function);
    if(pdn)
       *pdn = policies::checked_narrowing_cast<result_type, Policy>(dn, function);
-   return policies::checked_narrowing_cast<result_type, Policy>(sn, function);;
+   return policies::checked_narrowing_cast<result_type, Policy>(sn, function);
 }
 
 template <class T, class U, class V>

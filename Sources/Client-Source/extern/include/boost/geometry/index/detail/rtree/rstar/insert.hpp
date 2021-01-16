@@ -2,7 +2,11 @@
 //
 // R-tree R*-tree insert algorithm implementation
 //
-// Copyright (c) 2011-2013 Adam Wulkiewicz, Lodz, Poland.
+// Copyright (c) 2011-2015 Adam Wulkiewicz, Lodz, Poland.
+//
+// This file was modified by Oracle on 2019-2020.
+// Modifications copyright (c) 2019-2020 Oracle and/or its affiliates.
+// Contributed and/or modified by Adam Wulkiewicz, on behalf of Oracle
 //
 // Use, modification and distribution is subject to the Boost Software License,
 // Version 1.0. (See accompanying file LICENSE_1_0.txt or copy at
@@ -10,6 +14,10 @@
 
 #ifndef BOOST_GEOMETRY_INDEX_DETAIL_RTREE_RSTAR_INSERT_HPP
 #define BOOST_GEOMETRY_INDEX_DETAIL_RTREE_RSTAR_INSERT_HPP
+
+#include <type_traits>
+
+#include <boost/core/ignore_unused.hpp>
 
 #include <boost/geometry/index/detail/algorithms/content.hpp>
 
@@ -19,15 +27,49 @@ namespace detail { namespace rtree { namespace visitors {
 
 namespace rstar {
 
-template <typename Value, typename Options, typename Translator, typename Box, typename Allocators>
+// Utility to distinguish between default and non-default index strategy
+template <typename Point1, typename Point2, typename Strategy>
+struct comparable_distance_point_point
+{
+    typedef typename Strategy::comparable_distance_point_point_strategy_type strategy_type;
+    typedef typename geometry::comparable_distance_result
+        <
+            Point1, Point2, strategy_type
+        >::type result_type;
+
+    static inline strategy_type get_strategy(Strategy const& strategy)
+    {
+        return strategy.get_comparable_distance_point_point_strategy();
+    }
+};
+
+template <typename Point1, typename Point2>
+struct comparable_distance_point_point<Point1, Point2, default_strategy>
+{
+    typedef default_strategy strategy_type;
+    typedef typename geometry::default_comparable_distance_result
+        <
+            Point1, Point2
+        >::type result_type;
+
+    static inline strategy_type get_strategy(default_strategy const& )
+    {
+        return strategy_type();
+    }
+};
+
+template <typename MembersHolder>
 class remove_elements_to_reinsert
 {
 public:
-    typedef typename rtree::node<Value, typename Options::parameters_type, Box, Allocators, typename Options::node_tag>::type node;
-    typedef typename rtree::internal_node<Value, typename Options::parameters_type, Box, Allocators, typename Options::node_tag>::type internal_node;
-    typedef typename rtree::leaf<Value, typename Options::parameters_type, Box, Allocators, typename Options::node_tag>::type leaf;
+    typedef typename MembersHolder::box_type box_type;
+    typedef typename MembersHolder::parameters_type parameters_type;
+    typedef typename MembersHolder::translator_type translator_type;
+    typedef typename MembersHolder::allocators_type allocators_type;
 
-    typedef typename Options::parameters_type parameters_type;
+    typedef typename MembersHolder::node node;
+    typedef typename MembersHolder::internal_node internal_node;
+    typedef typename MembersHolder::leaf leaf;
 
     //typedef typename Allocators::internal_node_pointer internal_node_pointer;
     typedef internal_node * internal_node_pointer;
@@ -38,14 +80,19 @@ public:
                              internal_node_pointer parent,
                              size_t current_child_index,
                              parameters_type const& parameters,
-                             Translator const& translator,
-                             Allocators & allocators)
+                             translator_type const& translator,
+                             allocators_type & allocators)
     {
         typedef typename rtree::elements_type<Node>::type elements_type;
         typedef typename elements_type::value_type element_type;
-        typedef typename geometry::point_type<Box>::type point_type;
+        typedef typename geometry::point_type<box_type>::type point_type;
+        typedef typename index::detail::strategy_type<parameters_type>::type strategy_type;
         // TODO: awulkiew - change second point_type to the point type of the Indexable?
-        typedef typename geometry::default_distance_result<point_type>::type distance_type;
+        typedef rstar::comparable_distance_point_point
+            <
+                point_type, point_type, strategy_type
+            > comparable_distance_pp;
+        typedef typename comparable_distance_pp::result_type comparable_distance_type;
 
         elements_type & elements = rtree::elements(n);
 
@@ -63,19 +110,23 @@ public:
         // fill the container of centers' distances of children from current node's center
         typedef typename index::detail::rtree::container_from_elements_type<
             elements_type,
-            std::pair<distance_type, element_type>
+            std::pair<comparable_distance_type, element_type>
         >::type sorted_elements_type;
+
         sorted_elements_type sorted_elements;
         // If constructor is used instead of resize() MS implementation leaks here
         sorted_elements.reserve(elements_count);                                                         // MAY THROW, STRONG (V, E: alloc, copy)
         
+        typename comparable_distance_pp::strategy_type
+            cdist_strategy = comparable_distance_pp::get_strategy(index::detail::get_strategy(parameters));
+
         for ( typename elements_type::const_iterator it = elements.begin() ;
               it != elements.end() ; ++it )
         {
             point_type element_center;
             geometry::centroid( rtree::element_indexable(*it, translator), element_center);
             sorted_elements.push_back(std::make_pair(
-                geometry::comparable_distance(node_center, element_center),
+                geometry::comparable_distance(node_center, element_center, cdist_strategy),
                 *it));                                                                                  // MAY THROW (V, E: copy)
         }
 
@@ -84,7 +135,7 @@ public:
             sorted_elements.begin(),
             sorted_elements.begin() + reinserted_elements_count,
             sorted_elements.end(),
-            distances_dsc<distance_type, element_type>);                                                // MAY THROW, BASIC (V, E: copy)
+            distances_dsc<comparable_distance_type, element_type>);                                                // MAY THROW, BASIC (V, E: copy)
 
         // copy elements which will be reinserted
         result_elements.clear();
@@ -113,14 +164,14 @@ public:
             for ( typename sorted_elements_type::iterator it = sorted_elements.begin() ;
                   it != sorted_elements.end() ; ++it )
             {
-                destroy_element<Value, Options, Translator, Box, Allocators>::apply(it->second, allocators);
+                destroy_element<MembersHolder>::apply(it->second, allocators);
             }
 
             BOOST_RETHROW                                                                                 // RETHROW
         }
         BOOST_CATCH_END
 
-        ::boost::ignore_unused_variable_warning(parameters);
+        ::boost::ignore_unused(parameters);
     }
 
 private:
@@ -141,48 +192,70 @@ private:
     }
 };
 
-template <size_t InsertIndex, typename Element, typename Value, typename Options, typename Box, typename Allocators>
+template
+<
+    size_t InsertIndex,
+    typename Element,
+    typename MembersHolder,
+    bool IsValue = std::is_same<Element, typename MembersHolder::value_type>::value
+>
 struct level_insert_elements_type
 {
     typedef typename rtree::elements_type<
-        typename rtree::internal_node<Value, typename Options::parameters_type, Box, Allocators, typename Options::node_tag>::type
+        typename rtree::internal_node<
+            typename MembersHolder::value_type,
+            typename MembersHolder::parameters_type,
+            typename MembersHolder::box_type,
+            typename MembersHolder::allocators_type,
+            typename MembersHolder::node_tag
+        >::type
     >::type type;
 };
 
-template <typename Value, typename Options, typename Box, typename Allocators>
-struct level_insert_elements_type<0, Value, Value, Options, Box, Allocators>
+template <typename Value, typename MembersHolder>
+struct level_insert_elements_type<0, Value, MembersHolder, true>
 {
     typedef typename rtree::elements_type<
-        typename rtree::leaf<Value, typename Options::parameters_type, Box, Allocators, typename Options::node_tag>::type
+        typename rtree::leaf<
+            typename MembersHolder::value_type,
+            typename MembersHolder::parameters_type,
+            typename MembersHolder::box_type,
+            typename MembersHolder::allocators_type,
+            typename MembersHolder::node_tag
+        >::type
     >::type type;
 };
 
-template <size_t InsertIndex, typename Element, typename Value, typename Options, typename Translator, typename Box, typename Allocators>
+template <size_t InsertIndex, typename Element, typename MembersHolder>
 struct level_insert_base
-    : public detail::insert<Element, Value, Options, Translator, Box, Allocators>
+    : public detail::insert<Element, MembersHolder>
 {
-    typedef detail::insert<Element, Value, Options, Translator, Box, Allocators> base;
+    typedef detail::insert<Element, MembersHolder> base;
     typedef typename base::node node;
     typedef typename base::internal_node internal_node;
     typedef typename base::leaf leaf;
 
-    typedef typename level_insert_elements_type<InsertIndex, Element, Value, Options, Box, Allocators>::type elements_type;
+    typedef typename level_insert_elements_type<InsertIndex, Element, MembersHolder>::type elements_type;
     typedef typename index::detail::rtree::container_from_elements_type<
         elements_type,
         typename elements_type::value_type
     >::type result_elements_type;
 
-    typedef typename Options::parameters_type parameters_type;
+    typedef typename MembersHolder::box_type box_type;
+    typedef typename MembersHolder::parameters_type parameters_type;
+    typedef typename MembersHolder::translator_type translator_type;
+    typedef typename MembersHolder::allocators_type allocators_type;
 
-    typedef typename Allocators::node_pointer node_pointer;
+    typedef typename allocators_type::node_pointer node_pointer;
+    typedef typename allocators_type::size_type size_type;
 
     inline level_insert_base(node_pointer & root,
-                             size_t & leafs_level,
+                             size_type & leafs_level,
                              Element const& element,
                              parameters_type const& parameters,
-                             Translator const& translator,
-                             Allocators & allocators,
-                             size_t relative_level)
+                             translator_type const& translator,
+                             allocators_type & allocators,
+                             size_type relative_level)
         : base(root, leafs_level, element, parameters, translator, allocators, relative_level)
         , result_relative_level(0)
     {}
@@ -202,7 +275,7 @@ struct level_insert_base
             {
                 // NOTE: exception-safety
                 // After an exception result_elements may contain garbage, don't use it
-                rstar::remove_elements_to_reinsert<Value, Options, Translator, Box, Allocators>::apply(
+                rstar::remove_elements_to_reinsert<MembersHolder>::apply(
                     result_elements, n,
                     base::m_traverse_data.parent, base::m_traverse_data.current_child_index,
                     base::m_parameters, base::m_translator, base::m_allocators);                            // MAY THROW, BASIC (V, E: alloc, copy)
@@ -227,40 +300,65 @@ struct level_insert_base
     }
 
     template <typename Node>
-    inline void recalculate_aabb_if_necessary(Node &n) const
+    inline void recalculate_aabb_if_necessary(Node const& n) const
     {
         if ( !result_elements.empty() && !base::m_traverse_data.current_is_root() )
         {
             // calulate node's new box
-            base::m_traverse_data.current_element().first =
-                elements_box<Box>(rtree::elements(n).begin(), rtree::elements(n).end(), base::m_translator);
+            recalculate_aabb(n);
         }
     }
 
-    size_t result_relative_level;
+    template <typename Node>
+    inline void recalculate_aabb(Node const& n) const
+    {
+        base::m_traverse_data.current_element().first =
+            elements_box<box_type>(rtree::elements(n).begin(), rtree::elements(n).end(),
+                                   base::m_translator,
+                                   index::detail::get_strategy(base::m_parameters));
+    }
+
+    inline void recalculate_aabb(leaf const& n) const
+    {
+        base::m_traverse_data.current_element().first =
+            values_box<box_type>(rtree::elements(n).begin(), rtree::elements(n).end(),
+                                 base::m_translator,
+                                 index::detail::get_strategy(base::m_parameters));
+    }
+
+    size_type result_relative_level;
     result_elements_type result_elements;
 };
 
-template <size_t InsertIndex, typename Element, typename Value, typename Options, typename Translator, typename Box, typename Allocators>
+template
+<
+    size_t InsertIndex,
+    typename Element,
+    typename MembersHolder,
+    bool IsValue = std::is_same<Element, typename MembersHolder::value_type>::value
+>
 struct level_insert
-    : public level_insert_base<InsertIndex, Element, Value, Options, Translator, Box, Allocators>
+    : public level_insert_base<InsertIndex, Element, MembersHolder>
 {
-    typedef level_insert_base<InsertIndex, Element, Value, Options, Translator, Box, Allocators> base;
+    typedef level_insert_base<InsertIndex, Element, MembersHolder> base;
     typedef typename base::node node;
     typedef typename base::internal_node internal_node;
     typedef typename base::leaf leaf;
 
-    typedef typename Options::parameters_type parameters_type;
+    typedef typename base::parameters_type parameters_type;
+    typedef typename base::translator_type translator_type;
+    typedef typename base::allocators_type allocators_type;
 
-    typedef typename Allocators::node_pointer node_pointer;
+    typedef typename base::node_pointer node_pointer;
+    typedef typename base::size_type size_type;
 
     inline level_insert(node_pointer & root,
-                        size_t & leafs_level,
+                        size_type & leafs_level,
                         Element const& element,
                         parameters_type const& parameters,
-                        Translator const& translator,
-                        Allocators & allocators,
-                        size_t relative_level)
+                        translator_type const& translator,
+                        allocators_type & allocators,
+                        size_type relative_level)
         : base(root, leafs_level, element, parameters, translator, allocators, relative_level)
     {}
 
@@ -298,8 +396,7 @@ struct level_insert
                 // NOTE: exception-safety
                 // if the insert fails above, the element won't be stored in the tree, so delete it
 
-                rtree::visitors::destroy<Value, Options, Translator, Box, Allocators> del_v(base::m_element.second, base::m_allocators);
-                rtree::apply_visitor(del_v, *base::m_element.second);
+                rtree::visitors::destroy<MembersHolder>::apply(base::m_element.second, base::m_allocators);
 
                 BOOST_RETHROW                                                                                 // RETHROW
             }
@@ -326,26 +423,30 @@ struct level_insert
     }
 };
 
-template <size_t InsertIndex, typename Value, typename Options, typename Translator, typename Box, typename Allocators>
-struct level_insert<InsertIndex, Value, Value, Options, Translator, Box, Allocators>
-    : public level_insert_base<InsertIndex, Value, Value, Options, Translator, Box, Allocators>
+template <size_t InsertIndex, typename Value, typename MembersHolder>
+struct level_insert<InsertIndex, Value, MembersHolder, true>
+    : public level_insert_base<InsertIndex, typename MembersHolder::value_type, MembersHolder>
 {
-    typedef level_insert_base<InsertIndex, Value, Value, Options, Translator, Box, Allocators> base;
+    typedef level_insert_base<InsertIndex, typename MembersHolder::value_type, MembersHolder> base;
     typedef typename base::node node;
     typedef typename base::internal_node internal_node;
     typedef typename base::leaf leaf;
 
-    typedef typename Options::parameters_type parameters_type;
+    typedef typename MembersHolder::value_type value_type;
+    typedef typename base::parameters_type parameters_type;
+    typedef typename base::translator_type translator_type;
+    typedef typename base::allocators_type allocators_type;
 
-    typedef typename Allocators::node_pointer node_pointer;
+    typedef typename base::node_pointer node_pointer;
+    typedef typename base::size_type size_type;
 
     inline level_insert(node_pointer & root,
-                        size_t & leafs_level,
-                        Value const& v,
+                        size_type & leafs_level,
+                        value_type const& v,
                         parameters_type const& parameters,
-                        Translator const& translator,
-                        Allocators & allocators,
-                        size_t relative_level)
+                        translator_type const& translator,
+                        allocators_type & allocators,
+                        size_type relative_level)
         : base(root, leafs_level, v, parameters, translator, allocators, relative_level)
     {}
 
@@ -381,26 +482,30 @@ struct level_insert<InsertIndex, Value, Value, Options, Translator, Box, Allocat
     }
 };
 
-template <typename Value, typename Options, typename Translator, typename Box, typename Allocators>
-struct level_insert<0, Value, Value, Options, Translator, Box, Allocators>
-    : public level_insert_base<0, Value, Value, Options, Translator, Box, Allocators>
+template <typename Value, typename MembersHolder>
+struct level_insert<0, Value, MembersHolder, true>
+    : public level_insert_base<0, typename MembersHolder::value_type, MembersHolder>
 {
-    typedef level_insert_base<0, Value, Value, Options, Translator, Box, Allocators> base;
+    typedef level_insert_base<0, typename MembersHolder::value_type, MembersHolder> base;
     typedef typename base::node node;
     typedef typename base::internal_node internal_node;
     typedef typename base::leaf leaf;
 
-    typedef typename Options::parameters_type parameters_type;
+    typedef typename MembersHolder::value_type value_type;
+    typedef typename base::parameters_type parameters_type;
+    typedef typename base::translator_type translator_type;
+    typedef typename base::allocators_type allocators_type;
 
-    typedef typename Allocators::node_pointer node_pointer;
+    typedef typename base::node_pointer node_pointer;
+    typedef typename base::size_type size_type;
 
     inline level_insert(node_pointer & root,
-                        size_t & leafs_level,
-                        Value const& v,
+                        size_type & leafs_level,
+                        value_type const& v,
                         parameters_type const& parameters,
-                        Translator const& translator,
-                        Allocators & allocators,
-                        size_t relative_level)
+                        translator_type const& translator,
+                        allocators_type & allocators,
+                        size_type relative_level)
         : base(root, leafs_level, v, parameters, translator, allocators, relative_level)
     {}
 
@@ -439,39 +544,43 @@ struct level_insert<0, Value, Value, Options, Translator, Box, Allocators>
 // After passing the Element to insert visitor the Element is managed by the tree
 // I.e. one should not delete the node passed to the insert visitor after exception is thrown
 // because this visitor may delete it
-template <typename Element, typename Value, typename Options, typename Translator, typename Box, typename Allocators>
-class insert<Element, Value, Options, Translator, Box, Allocators, insert_reinsert_tag>
-    : public rtree::visitor<Value, typename Options::parameters_type, Box, Allocators, typename Options::node_tag, false>::type
+template <typename Element, typename MembersHolder>
+class insert<Element, MembersHolder, insert_reinsert_tag>
+    : public MembersHolder::visitor
 {
-    typedef typename Options::parameters_type parameters_type;
+    typedef typename MembersHolder::parameters_type parameters_type;
+    typedef typename MembersHolder::translator_type translator_type;
+    typedef typename MembersHolder::allocators_type allocators_type;
 
-    typedef typename rtree::node<Value, parameters_type, Box, Allocators, typename Options::node_tag>::type node;
-    typedef typename rtree::internal_node<Value, parameters_type, Box, Allocators, typename Options::node_tag>::type internal_node;
-    typedef typename rtree::leaf<Value, parameters_type, Box, Allocators, typename Options::node_tag>::type leaf;
+    typedef typename MembersHolder::node node;
+    typedef typename MembersHolder::internal_node internal_node;
+    typedef typename MembersHolder::leaf leaf;
 
-    typedef typename Allocators::node_pointer node_pointer;
+    typedef typename allocators_type::node_pointer node_pointer;
+    typedef typename allocators_type::size_type size_type;
 
 public:
     inline insert(node_pointer & root,
-                  size_t & leafs_level,
+                  size_type & leafs_level,
                   Element const& element,
                   parameters_type const& parameters,
-                  Translator const& translator,
-                  Allocators & allocators,
-                  size_t relative_level = 0)
+                  translator_type const& translator,
+                  allocators_type & allocators,
+                  size_type relative_level = 0)
         : m_root(root), m_leafs_level(leafs_level), m_element(element)
         , m_parameters(parameters), m_translator(translator)
         , m_relative_level(relative_level), m_allocators(allocators)
     {}
 
-    inline void operator()(internal_node & BOOST_GEOMETRY_INDEX_ASSERT_UNUSED_PARAM(n))
+    inline void operator()(internal_node & n)
     {
+        boost::ignore_unused(n);
         BOOST_GEOMETRY_INDEX_ASSERT(&n == &rtree::get<internal_node>(*m_root), "current node should be the root");
 
         // Distinguish between situation when reinserts are required and use adequate visitor, otherwise use default one
         if ( m_parameters.get_reinserted_elements() > 0 )
         {
-            rstar::level_insert<0, Element, Value, Options, Translator, Box, Allocators> lins_v(
+            rstar::level_insert<0, Element, MembersHolder> lins_v(
                 m_root, m_leafs_level, m_element, m_parameters, m_translator, m_allocators, m_relative_level);
 
             rtree::apply_visitor(lins_v, *m_root);                                                              // MAY THROW (V, E: alloc, copy, N: alloc)
@@ -483,21 +592,22 @@ public:
         }
         else
         {
-            visitors::insert<Element, Value, Options, Translator, Box, Allocators, insert_default_tag> ins_v(
+            visitors::insert<Element, MembersHolder, insert_default_tag> ins_v(
                 m_root, m_leafs_level, m_element, m_parameters, m_translator, m_allocators, m_relative_level);
 
             rtree::apply_visitor(ins_v, *m_root); 
         }
     }
 
-    inline void operator()(leaf & BOOST_GEOMETRY_INDEX_ASSERT_UNUSED_PARAM(n))
+    inline void operator()(leaf & n)
     {
+        boost::ignore_unused(n);
         BOOST_GEOMETRY_INDEX_ASSERT(&n == &rtree::get<leaf>(*m_root), "current node should be the root");
 
         // Distinguish between situation when reinserts are required and use adequate visitor, otherwise use default one
         if ( m_parameters.get_reinserted_elements() > 0 )
         {
-            rstar::level_insert<0, Element, Value, Options, Translator, Box, Allocators> lins_v(
+            rstar::level_insert<0, Element, MembersHolder> lins_v(
                 m_root, m_leafs_level, m_element, m_parameters, m_translator, m_allocators, m_relative_level);
 
             rtree::apply_visitor(lins_v, *m_root);                                                              // MAY THROW (V, E: alloc, copy, N: alloc)
@@ -507,7 +617,7 @@ public:
         }
         else
         {
-            visitors::insert<Element, Value, Options, Translator, Box, Allocators, insert_default_tag> ins_v(
+            visitors::insert<Element, MembersHolder, insert_default_tag> ins_v(
                 m_root, m_leafs_level, m_element, m_parameters, m_translator, m_allocators, m_relative_level);
 
             rtree::apply_visitor(ins_v, *m_root); 
@@ -524,7 +634,7 @@ private:
         typename Elements::reverse_iterator it = elements.rbegin();
         for ( ; it != elements.rend() ; ++it)
         {
-            rstar::level_insert<1, element_type, Value, Options, Translator, Box, Allocators> lins_v(
+            rstar::level_insert<1, element_type, MembersHolder> lins_v(
                 m_root, m_leafs_level, *it, m_parameters, m_translator, m_allocators, relative_level);
 
             BOOST_TRY
@@ -535,7 +645,7 @@ private:
             {
                 ++it;
                 for ( ; it != elements.rend() ; ++it)
-                    rtree::destroy_element<Value, Options, Translator, Box, Allocators>::apply(*it, m_allocators);
+                    rtree::destroy_element<MembersHolder>::apply(*it, m_allocators);
                 BOOST_RETHROW                                                                                     // RETHROW
             }
             BOOST_CATCH_END
@@ -551,15 +661,15 @@ private:
     }
 
     node_pointer & m_root;
-    size_t & m_leafs_level;
+    size_type & m_leafs_level;
     Element const& m_element;
 
     parameters_type const& m_parameters;
-    Translator const& m_translator;
+    translator_type const& m_translator;
 
-    size_t m_relative_level;
+    size_type m_relative_level;
 
-    Allocators & m_allocators;
+    allocators_type & m_allocators;
 };
 
 }}} // namespace detail::rtree::visitors

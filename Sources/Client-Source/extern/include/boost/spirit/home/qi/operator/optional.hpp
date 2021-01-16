@@ -5,8 +5,8 @@
     Distributed under the Boost Software License, Version 1.0. (See accompanying
     file LICENSE_1_0.txt or copy at http://www.boost.org/LICENSE_1_0.txt)
 =============================================================================*/
-#if !defined(SPIRIT_OPTIONAL_MARCH_23_2007_1117PM)
-#define SPIRIT_OPTIONAL_MARCH_23_2007_1117PM
+#ifndef BOOST_SPIRIT_QI_OPERATOR_OPTIONAL_HPP
+#define BOOST_SPIRIT_QI_OPERATOR_OPTIONAL_HPP
 
 #if defined(_MSC_VER)
 #pragma once
@@ -22,6 +22,8 @@
 #include <boost/spirit/home/qi/meta_compiler.hpp>
 #include <boost/spirit/home/qi/detail/assign_to.hpp>
 #include <boost/optional.hpp>
+#include <boost/proto/operators.hpp>
+#include <boost/proto/tags.hpp>
 #include <vector>
 
 namespace boost { namespace spirit
@@ -65,7 +67,7 @@ namespace boost { namespace spirit { namespace qi
           , Attribute& attr_, mpl::false_) const
         {
             // create a local value if Attribute is not unused_type
-            typename spirit::result_of::optional_value<Attribute>::type val = 
+            typename spirit::result_of::optional_value<Attribute>::type val =
                 typename spirit::result_of::optional_value<Attribute>::type();
 
             if (subject.parse(first, last, context, skipper, val))
@@ -92,7 +94,7 @@ namespace boost { namespace spirit { namespace qi
           , Context& context, Skipper const& skipper
           , Attribute& attr_) const
         {
-            typedef typename spirit::result_of::optional_value<Attribute>::type 
+            typedef typename spirit::result_of::optional_value<Attribute>::type
                 attribute_type;
 
             return parse_impl(first, last, context, skipper, attr_

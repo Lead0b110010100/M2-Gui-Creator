@@ -1,5 +1,5 @@
 /*
- *          Copyright Andrey Semashev 2007 - 2013.
+ *          Copyright Andrey Semashev 2007 - 2015.
  * Distributed under the Boost Software License, Version 1.0.
  *    (See accompanying file LICENSE_1_0.txt or copy at
  *          http://www.boost.org/LICENSE_1_0.txt)
@@ -108,16 +108,16 @@ struct csv_decorator_gen
  * the actual decorator. For example:
  *
  * <code>
- * csv_decor[ attr< std::string >("MyAttr") ]
+ * csv_decor[ stream << attr< std::string >("MyAttr") ]
  * </code>
  *
  * For wide-character formatting there is the similar \c wcsv_decor decorator generator object.
  */
 #ifdef BOOST_LOG_USE_CHAR
-const aux::csv_decorator_gen< char > csv_decor = {};
+BOOST_INLINE_VARIABLE const aux::csv_decorator_gen< char > csv_decor = {};
 #endif
 #ifdef BOOST_LOG_USE_WCHAR_T
-const aux::csv_decorator_gen< wchar_t > wcsv_decor = {};
+BOOST_INLINE_VARIABLE const aux::csv_decorator_gen< wchar_t > wcsv_decor = {};
 #endif
 
 /*!

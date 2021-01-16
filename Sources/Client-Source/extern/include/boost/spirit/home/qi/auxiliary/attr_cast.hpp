@@ -3,8 +3,8 @@
 //  Distributed under the Boost Software License, Version 1.0. (See accompanying
 //  file LICENSE_1_0.txt or copy at http://www.boost.org/LICENSE_1_0.txt)
 
-#if !defined(SPIRIT_QI_ATTR_CAST_SEP_26_2009_0735PM)
-#define SPIRIT_QI_ATTR_CAST_SEP_26_2009_0735PM
+#ifndef BOOST_SPIRIT_QI_AUXILIARY_ATTR_CAST_HPP
+#define BOOST_SPIRIT_QI_AUXILIARY_ATTR_CAST_HPP
 
 #if defined(_MSC_VER)
 #pragma once
@@ -50,7 +50,7 @@ namespace boost { namespace spirit { namespace qi
         typedef typename mpl::eval_if<
             traits::not_is_unused<Transformed>
           , mpl::identity<Transformed>
-          , traits::attribute_of<subject_type> >::type 
+          , traits::attribute_of<subject_type> >::type
         transformed_attribute_type;
 
         attr_cast_parser(Subject const& subject_)
@@ -87,7 +87,7 @@ namespace boost { namespace spirit { namespace qi
             // do down-stream transformation, provides attribute for embedded
             // parser
             typedef traits::transform_attribute<
-                exposed_attribute_type, transformed_attribute_type, domain> 
+                exposed_attribute_type, transformed_attribute_type, domain>
             transform;
 
             typename transform::type attr_ = transform::pre(attr_param);
@@ -101,7 +101,7 @@ namespace boost { namespace spirit { namespace qi
 
             // do up-stream transformation, this mainly integrates the results
             // back into the original attribute value, if appropriate
-            traits::post_transform(attr_param, attr_);
+            transform::post(attr_param, attr_);
             return true;
         }
 
@@ -114,9 +114,8 @@ namespace boost { namespace spirit { namespace qi
 
         Subject subject;
 
-    private:
         // silence MSVC warning C4512: assignment operator could not be generated
-        attr_cast_parser& operator= (attr_cast_parser const&);
+        BOOST_DELETED_FUNCTION(attr_cast_parser& operator= (attr_cast_parser const&))
     };
 
     ///////////////////////////////////////////////////////////////////////////

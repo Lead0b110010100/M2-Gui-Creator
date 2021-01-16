@@ -10,8 +10,8 @@
 //           Andrew Lumsdaine
 //  See http://www.boost.org/libs/multi_array for documentation.
 
-#ifndef ITERATOR_RG071801_HPP
-#define ITERATOR_RG071801_HPP
+#ifndef BOOST_MULTI_ARRAY_ITERATOR_HPP
+#define BOOST_MULTI_ARRAY_ITERATOR_HPP
 
 //
 // iterator.hpp - implementation of iterators for the
@@ -20,7 +20,6 @@
 
 #include "boost/multi_array/base.hpp"
 #include "boost/iterator/iterator_facade.hpp"
-#include "boost/mpl/aux_/msvc_eti_base.hpp"
 #include <algorithm>
 #include <cstddef>
 #include <iterator>
@@ -59,15 +58,9 @@ class array_iterator
       , Reference
     >
     , private
-#if BOOST_WORKAROUND(BOOST_MSVC, < 1300)
-      mpl::aux::msvc_eti_base<typename 
-#endif 
           value_accessor_generator<T,NumDims>::type
-#if BOOST_WORKAROUND(BOOST_MSVC, < 1300)
-      >::type
-#endif 
 {
-  friend class iterator_core_access;
+  friend class ::boost::iterator_core_access;
   typedef detail::multi_array::associated_types<T,NumDims> access_t;
 
   typedef iterator_facade<
@@ -169,4 +162,4 @@ public:
 } // namespace detail
 } // namespace boost
 
-#endif // ITERATOR_RG071801_HPP
+#endif

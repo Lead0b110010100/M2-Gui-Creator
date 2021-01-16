@@ -6,7 +6,7 @@
  * accompanying file LICENSE_1_0.txt or copy at
  * http://www.boost.org/LICENSE_1_0.txt)
  *
- * $Id: random_device.hpp 71018 2011-04-05 21:27:52Z steven_watanabe $
+ * $Id$
  *
  * Revision history
  *  2000-02-18  Portability fixes (thanks to Beman Dawes)
@@ -22,6 +22,7 @@
 #include <boost/config.hpp>
 #include <boost/noncopyable.hpp>
 #include <boost/random/detail/auto_link.hpp>
+#include <boost/system/config.hpp> // force autolink to find Boost.System
 
 namespace boost {
 namespace random {
@@ -92,9 +93,9 @@ public:
     BOOST_STATIC_CONSTANT(bool, has_fixed_range = false);
 
     /** Returns the smallest value that the \random_device can produce. */
-    static result_type min BOOST_PREVENT_MACRO_SUBSTITUTION () { return 0; }
+    static BOOST_CONSTEXPR result_type min BOOST_PREVENT_MACRO_SUBSTITUTION () { return 0; }
     /** Returns the largest value that the \random_device can produce. */
-    static result_type max BOOST_PREVENT_MACRO_SUBSTITUTION () { return ~0u; }
+    static BOOST_CONSTEXPR result_type max BOOST_PREVENT_MACRO_SUBSTITUTION () { return ~0u; }
 
     /** Constructs a @c random_device, optionally using the default device. */
     BOOST_RANDOM_DECL random_device();

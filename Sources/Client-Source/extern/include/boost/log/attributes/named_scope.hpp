@@ -1,5 +1,5 @@
 /*
- *          Copyright Andrey Semashev 2007 - 2013.
+ *          Copyright Andrey Semashev 2007 - 2015.
  * Distributed under the Boost Software License, Version 1.0.
  *    (See accompanying file LICENSE_1_0.txt or copy at
  *          http://www.boost.org/LICENSE_1_0.txt)
@@ -20,14 +20,15 @@
 #include <memory>
 #include <iterator>
 #include <cstddef>
-#include <boost/log/detail/config.hpp>
 #include <boost/current_function.hpp>
-#include <boost/mpl/if.hpp>
+#include <boost/type_traits/conditional.hpp>
+#include <boost/log/detail/config.hpp>
 #include <boost/log/utility/string_literal.hpp>
 #include <boost/log/utility/unique_identifier_name.hpp>
 #include <boost/log/utility/unused_variable.hpp>
 #include <boost/log/attributes/attribute.hpp>
 #include <boost/log/attributes/attribute_cast.hpp>
+#include <boost/log/detail/allocator_traits.hpp>
 #include <boost/log/detail/header.hpp>
 
 #ifdef BOOST_HAS_PRAGMA_ONCE
@@ -66,6 +67,17 @@ struct named_scope_entry
     //! \endcond
 {
     /*!
+     * \brief Scope entry type
+     *
+     * Describes scope name specifics
+     */
+    enum scope_name_type
+    {
+        general,   //!< The scope name contains some unstructured string that should not be interpreted by the library
+        function   //!< The scope name contains a function signature
+    };
+
+    /*!
      * The scope name (e.g. a function signature)
      */
     string_literal scope_name;
@@ -77,6 +89,10 @@ struct named_scope_entry
      * The line number in the source file
      */
     unsigned int line;
+    /*!
+     * The scope name type
+     */
+    scope_name_type type;
 
     /*!
      * Initializing constructor
@@ -85,10 +101,11 @@ struct named_scope_entry
      *
      * \b Throws: Nothing.
      */
-    named_scope_entry(string_literal const& sn, string_literal const& fn, unsigned int ln) BOOST_NOEXCEPT :
+    named_scope_entry(string_literal const& sn, string_literal const& fn, unsigned int ln, scope_name_type t = general) BOOST_NOEXCEPT :
         scope_name(sn),
         file_name(fn),
-        line(ln)
+        line(ln),
+        type(t)
     {
     }
 };
@@ -108,13 +125,13 @@ public:
     typedef std::allocator< named_scope_entry > allocator_type;
 
     //  Standard types
-    typedef allocator_type::value_type value_type;
-    typedef allocator_type::reference reference;
-    typedef allocator_type::const_reference const_reference;
-    typedef allocator_type::pointer pointer;
-    typedef allocator_type::const_pointer const_pointer;
-    typedef allocator_type::size_type size_type;
-    typedef allocator_type::difference_type difference_type;
+    typedef log::aux::allocator_traits< allocator_type >::value_type value_type;
+    typedef log::aux::allocator_traits< allocator_type >::size_type size_type;
+    typedef log::aux::allocator_traits< allocator_type >::difference_type difference_type;
+    typedef log::aux::allocator_traits< allocator_type >::pointer pointer;
+    typedef log::aux::allocator_traits< allocator_type >::const_pointer const_pointer;
+    typedef value_type& reference;
+    typedef value_type const& const_reference;
 
 #ifndef BOOST_LOG_DOXYGEN_PASS
 
@@ -133,12 +150,12 @@ protected:
         //  Standard typedefs
         typedef named_scope_list::difference_type difference_type;
         typedef named_scope_list::value_type value_type;
-        typedef typename mpl::if_c<
+        typedef typename boost::conditional<
             fConstV,
             named_scope_list::const_reference,
             named_scope_list::reference
         >::type reference;
-        typedef typename mpl::if_c<
+        typedef typename boost::conditional<
             fConstV,
             named_scope_list::const_pointer,
             named_scope_list::pointer
@@ -354,8 +371,8 @@ public:
          * \param fn File name, in which the scope is located.
          * \param ln Line number in the file.
          */
-        sentry(string_literal const& sn, string_literal const& fn, unsigned int ln) BOOST_NOEXCEPT :
-            m_Entry(sn, fn, ln)
+        sentry(string_literal const& sn, string_literal const& fn, unsigned int ln, scope_entry::scope_name_type t = scope_entry::general) BOOST_NOEXCEPT :
+            m_Entry(sn, fn, ln, t)
         {
             named_scope::push_scope(m_Entry);
         }
@@ -421,8 +438,8 @@ BOOST_LOG_CLOSE_NAMESPACE // namespace log
 
 #ifndef BOOST_LOG_DOXYGEN_PASS
 
-#define BOOST_LOG_NAMED_SCOPE_INTERNAL(var, name, file, line)\
-    BOOST_LOG_UNUSED_VARIABLE(::boost::log::attributes::named_scope::sentry, var, (name, file, line));
+#define BOOST_LOG_NAMED_SCOPE_INTERNAL(var, name, file, line, type)\
+    BOOST_LOG_UNUSED_VARIABLE(::boost::log::attributes::named_scope::sentry, var, (name, file, line, type));
 
 #endif // BOOST_LOG_DOXYGEN_PASS
 
@@ -430,15 +447,28 @@ BOOST_LOG_CLOSE_NAMESPACE // namespace log
  * Macro for scope markup. The specified scope name is pushed to the end of the current thread scope list.
  */
 #define BOOST_LOG_NAMED_SCOPE(name)\
-    BOOST_LOG_NAMED_SCOPE_INTERNAL(BOOST_LOG_UNIQUE_IDENTIFIER_NAME(_boost_log_named_scope_sentry_), name, __FILE__, __LINE__)
+    BOOST_LOG_NAMED_SCOPE_INTERNAL(BOOST_LOG_UNIQUE_IDENTIFIER_NAME(_boost_log_named_scope_sentry_), name, __FILE__, __LINE__, ::boost::log::attributes::named_scope_entry::general)
 
 /*!
- * Macro for function scope markup. The scope name is constructed with help of compiler and contains current function name.
+ * Macro for function scope markup. The scope name is constructed with help of compiler and contains the current function signature.
  * The scope name is pushed to the end of the current thread scope list.
  *
  * Not all compilers have support for this macro. The exact form of the scope name may vary from one compiler to another.
  */
-#define BOOST_LOG_FUNCTION() BOOST_LOG_NAMED_SCOPE(BOOST_CURRENT_FUNCTION)
+#define BOOST_LOG_FUNCTION()\
+    BOOST_LOG_NAMED_SCOPE_INTERNAL(BOOST_LOG_UNIQUE_IDENTIFIER_NAME(_boost_log_named_scope_sentry_), BOOST_CURRENT_FUNCTION, __FILE__, __LINE__, ::boost::log::attributes::named_scope_entry::function)
+
+/*!
+ * Macro for function scope markup. The scope name is constructed with help of compiler and contains the current function name. It may be shorter than what \c BOOST_LOG_FUNCTION macro produces.
+ * The scope name is pushed to the end of the current thread scope list.
+ *
+ * Not all compilers have support for this macro. The exact form of the scope name may vary from one compiler to another.
+ */
+#if defined(_MSC_VER) || defined(__GNUC__)
+#define BOOST_LOG_FUNC() BOOST_LOG_NAMED_SCOPE(__FUNCTION__)
+#else
+#define BOOST_LOG_FUNC() BOOST_LOG_FUNCTION()
+#endif
 
 #include <boost/log/detail/footer.hpp>
 

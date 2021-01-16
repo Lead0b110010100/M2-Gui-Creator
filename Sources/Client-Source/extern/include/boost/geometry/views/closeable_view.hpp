@@ -4,6 +4,10 @@
 // Copyright (c) 2008-2012 Bruno Lalande, Paris, France.
 // Copyright (c) 2009-2012 Mateusz Loskot, London, UK.
 
+// This file was modified by Oracle on 2020.
+// Modifications copyright (c) 2020 Oracle and/or its affiliates.
+// Contributed and/or modified by Adam Wulkiewicz, on behalf of Oracle
+
 // Parts of Boost.Geometry are redesigned from Geodan's Geographic Library
 // (geolib/GGL), copyright (c) 1995-2010 Geodan, Amsterdam, the Netherlands.
 
@@ -13,9 +17,6 @@
 
 #ifndef BOOST_GEOMETRY_VIEWS_CLOSEABLE_VIEW_HPP
 #define BOOST_GEOMETRY_VIEWS_CLOSEABLE_VIEW_HPP
-
-
-#include <boost/range.hpp>
 
 #include <boost/geometry/core/closure.hpp>
 #include <boost/geometry/core/ring_type.hpp>
@@ -30,7 +31,7 @@ namespace boost { namespace geometry
 
 // Silence warning C4512: assignment operator could not be generated
 #if defined(_MSC_VER)
-#pragma warning(push)  
+#pragma warning(push)
 #pragma warning(disable : 4512)
 #endif
 
@@ -67,7 +68,7 @@ private :
 /*!
 \brief View on a range, either closing it or leaving it as it is
 \details The closeable_view is used internally by the library to handle all rings,
-    either closed or open, the same way. The default method is closed, all 
+    either closed or open, the same way. The default method is closed, all
     algorithms process rings as if they are closed. Therefore, if they are opened,
     a view is created which closes them.
     The closeable_view might be used by library users, but its main purpose is

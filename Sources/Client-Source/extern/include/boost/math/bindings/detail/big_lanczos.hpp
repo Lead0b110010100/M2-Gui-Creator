@@ -12,17 +12,17 @@ namespace boost{ namespace math{ namespace lanczos{
 
 //
 // Lanczos Coefficients for N=13 G=13.144565
-// Max experimental error (with arbitary precision arithmetic) 9.2213e-23
+// Max experimental error (with arbitrary precision arithmetic) 9.2213e-23
 // Generated with compiler: Microsoft Visual C++ version 8.0 on Win32 at Mar 23 2006
 //
 typedef lanczos13 lanczos13UDT;
 
 //
 // Lanczos Coefficients for N=22 G=22.61891
-// Max experimental error (with arbitary precision arithmetic) 2.9524e-38
+// Max experimental error (with arbitrary precision arithmetic) 2.9524e-38
 // Generated with compiler: Microsoft Visual C++ version 8.0 on Win32 at Mar 23 2006
 //
-struct lanczos22UDT : public mpl::int_<120>
+struct lanczos22UDT : public boost::integral_constant<int, 120>
 {
    //
    // Produces slightly better than 128-bit long-double precision when 
@@ -57,7 +57,7 @@ struct lanczos22UDT : public mpl::int_<120>
          static_cast<T>(BOOST_MATH_BIG_CONSTANT(T, 120, 2.50662827463100050241576528481104525333))
       };
       static const T denom[22] = {
-         static_cast<T>(BOOST_MATH_BIG_CONSTANT(T, 120, 0)),
+         static_cast<T>(BOOST_MATH_BIG_CONSTANT(T, 120, 0.0)),
          static_cast<T>(BOOST_MATH_BIG_CONSTANT(T, 120, 2432902008176640000.0)),
          static_cast<T>(BOOST_MATH_BIG_CONSTANT(T, 120, 8752948036761600000.0)),
          static_cast<T>(BOOST_MATH_BIG_CONSTANT(T, 120, 13803759753640704000.0)),
@@ -74,11 +74,11 @@ struct lanczos22UDT : public mpl::int_<120>
          static_cast<T>(BOOST_MATH_BIG_CONSTANT(T, 120, 756111184500.0)),
          static_cast<T>(BOOST_MATH_BIG_CONSTANT(T, 120, 40171771630.0)),
          static_cast<T>(BOOST_MATH_BIG_CONSTANT(T, 120, 1672280820.0)),
-         static_cast<T>(BOOST_MATH_BIG_CONSTANT(T, 120, 53327946)),
-         static_cast<T>(BOOST_MATH_BIG_CONSTANT(T, 120, 1256850)),
-         static_cast<T>(BOOST_MATH_BIG_CONSTANT(T, 120, 20615)),
-         static_cast<T>(BOOST_MATH_BIG_CONSTANT(T, 120, 210)),
-         static_cast<T>(BOOST_MATH_BIG_CONSTANT(T, 120, 1))
+         static_cast<T>(BOOST_MATH_BIG_CONSTANT(T, 120, 53327946.0)),
+         static_cast<T>(BOOST_MATH_BIG_CONSTANT(T, 120, 1256850.0)),
+         static_cast<T>(BOOST_MATH_BIG_CONSTANT(T, 120, 20615.0)),
+         static_cast<T>(BOOST_MATH_BIG_CONSTANT(T, 120, 210.0)),
+         static_cast<T>(BOOST_MATH_BIG_CONSTANT(T, 120, 1.0))
       };
       return boost::math::tools::evaluate_rational(num, denom, z);
    }
@@ -112,7 +112,7 @@ struct lanczos22UDT : public mpl::int_<120>
          static_cast<T>(BOOST_MATH_BIG_CONSTANT(T, 120, 0.3765495513732730583386223384116545391759e-9))
       };
       static const T denom[22] = {
-         static_cast<T>(BOOST_MATH_BIG_CONSTANT(T, 120, 0)),
+         static_cast<T>(BOOST_MATH_BIG_CONSTANT(T, 120, 0.0)),
          static_cast<T>(BOOST_MATH_BIG_CONSTANT(T, 120, 2432902008176640000.0)),
          static_cast<T>(BOOST_MATH_BIG_CONSTANT(T, 120, 8752948036761600000.0)),
          static_cast<T>(BOOST_MATH_BIG_CONSTANT(T, 120, 13803759753640704000.0)),
@@ -131,9 +131,9 @@ struct lanczos22UDT : public mpl::int_<120>
          static_cast<T>(BOOST_MATH_BIG_CONSTANT(T, 120, 1672280820.0)),
          static_cast<T>(BOOST_MATH_BIG_CONSTANT(T, 120, 53327946.0)),
          static_cast<T>(BOOST_MATH_BIG_CONSTANT(T, 120, 1256850.0)),
-         static_cast<T>(BOOST_MATH_BIG_CONSTANT(T, 120, 20615)),
-         static_cast<T>(BOOST_MATH_BIG_CONSTANT(T, 120, 210)),
-         static_cast<T>(BOOST_MATH_BIG_CONSTANT(T, 120, 1))
+         static_cast<T>(BOOST_MATH_BIG_CONSTANT(T, 120, 20615.0)),
+         static_cast<T>(BOOST_MATH_BIG_CONSTANT(T, 120, 210.0)),
+         static_cast<T>(BOOST_MATH_BIG_CONSTANT(T, 120, 1.0))
       };
       return boost::math::tools::evaluate_rational(num, denom, z);
    }
@@ -213,7 +213,7 @@ struct lanczos22UDT : public mpl::int_<120>
 };
 //
 // Lanczos Coefficients for N=31 G=32.08067
-// Max experimental error (with arbitary precision arithmetic) 0.162e-52
+// Max experimental error (with arbitrary precision arithmetic) 0.162e-52
 // Generated with compiler: Microsoft Visual C++ version 8.0 on Win32 at May 9 2006
 //
 struct lanczos31UDT

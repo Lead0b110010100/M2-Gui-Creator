@@ -20,6 +20,12 @@
 #include <boost/heap/detail/heap_node.hpp>
 #include <boost/heap/detail/stable_heap.hpp>
 #include <boost/heap/detail/tree_iterator.hpp>
+#include <boost/type_traits/integral_constant.hpp>
+
+#ifdef BOOST_HAS_PRAGMA_ONCE
+#pragma once
+#endif
+
 
 #ifndef BOOST_DOXYGEN_INVOKED
 #ifdef BOOST_HEAP_SANITYCHECKS
@@ -45,7 +51,7 @@ struct make_fibonacci_heap_base
 {
     static const bool constant_time_size = parameter::binding<Parspec,
                                                               tag::constant_time_size,
-                                                              boost::mpl::true_
+                                                              boost::true_type
                                                              >::type::value;
 
     typedef typename detail::make_heap_base<T, Parspec, constant_time_size>::type base_type;
@@ -53,7 +59,7 @@ struct make_fibonacci_heap_base
     typedef typename detail::make_heap_base<T, Parspec, constant_time_size>::compare_argument compare_argument;
     typedef marked_heap_node<typename base_type::internal_type> node_type;
 
-    typedef typename allocator_argument::template rebind<node_type>::other allocator_type;
+    typedef typename boost::allocator_rebind<allocator_argument, node_type>::type allocator_type;
 
     struct type:
         base_type,
@@ -63,28 +69,28 @@ struct make_fibonacci_heap_base
             base_type(arg)
         {}
 
+        type(type const & rhs):
+            base_type(static_cast<base_type const &>(rhs)),
+            allocator_type(static_cast<allocator_type const &>(rhs))
+        {}
+
+        type & operator=(type const & rhs)
+        {
+            base_type::operator=(static_cast<base_type const &>(rhs));
+            allocator_type::operator=(static_cast<allocator_type const &>(rhs));
+            return *this;
+        }
+
 #ifndef BOOST_NO_CXX11_RVALUE_REFERENCES
         type(type && rhs):
             base_type(std::move(static_cast<base_type&>(rhs))),
             allocator_type(std::move(static_cast<allocator_type&>(rhs)))
         {}
 
-        type(type & rhs):
-            base_type(static_cast<base_type&>(rhs)),
-            allocator_type(static_cast<allocator_type&>(rhs))
-        {}
-
         type & operator=(type && rhs)
         {
             base_type::operator=(std::move(static_cast<base_type&>(rhs)));
             allocator_type::operator=(std::move(static_cast<allocator_type&>(rhs)));
-            return *this;
-        }
-
-        type & operator=(type const & rhs)
-        {
-            base_type::operator=(static_cast<base_type const &>(rhs));
-            allocator_type::operator=(static_cast<allocator_type const &>(rhs));
             return *this;
         }
 #endif
@@ -149,8 +155,8 @@ private:
         typedef typename base_maker::compare_argument value_compare;
         typedef typename base_maker::allocator_type allocator_type;
 
-        typedef typename allocator_type::pointer node_pointer;
-        typedef typename allocator_type::const_pointer const_node_pointer;
+        typedef typename boost::allocator_pointer<allocator_type>::type node_pointer;
+        typedef typename boost::allocator_const_pointer<allocator_type>::type const_node_pointer;
 
         typedef detail::heap_node_list node_list_type;
         typedef typename node_list_type::iterator node_list_iterator;
@@ -238,13 +244,6 @@ public:
         rhs.top_element = NULL;
     }
 
-    fibonacci_heap(fibonacci_heap & rhs):
-        super_t(rhs), top_element(rhs.top_element)
-    {
-        roots.splice(roots.begin(), rhs.roots);
-        rhs.top_element = NULL;
-    }
-
     /// \copydoc boost::heap::priority_queue::operator=(priority_queue &&)
     fibonacci_heap & operator=(fibonacci_heap && rhs)
     {
@@ -301,7 +300,8 @@ public:
     /// \copydoc boost::heap::priority_queue::max_size
     size_type max_size(void) const
     {
-        return allocator_type::max_size();
+        const allocator_type& alloc = *this;
+        return boost::allocator_max_size(alloc);
     }
 
     /// \copydoc boost::heap::priority_queue::clear
@@ -349,8 +349,8 @@ public:
     {
         size_holder::increment();
 
-        node_pointer n = allocator_type::allocate(1);
-
+        allocator_type& alloc = *this;
+        node_pointer n = alloc.allocate(1);
         new(n) node(super_t::make_node(v));
         roots.push_front(*n);
 
@@ -373,8 +373,8 @@ public:
     {
         size_holder::increment();
 
-        node_pointer n = allocator_type::allocate(1);
-
+        allocator_type& alloc = *this;
+        node_pointer n = alloc.allocate(1);
         new(n) node(super_t::make_node(std::forward<Args>(args)...));
         roots.push_front(*n);
 
@@ -434,14 +434,7 @@ public:
      * */
     void update (handle_type handle)
     {
-        node_pointer n = handle.node_;
-        node_pointer parent = n->get_parent();
-
-        if (parent) {
-            n->parent = NULL;
-            roots.splice(roots.begin(), parent->children, node_list_type::s_iterator_to(*n));
-        }
-        add_children_to_root(n);
+        update_lazy(handle);
         consolidate();
     }
 
@@ -460,6 +453,9 @@ public:
             roots.splice(roots.begin(), parent->children, node_list_type::s_iterator_to(*n));
         }
         add_children_to_root(n);
+
+        if (super_t::operator()(top_element->value, n->value))
+            top_element = n;
     }
 
 
@@ -568,7 +564,7 @@ public:
     }
 
     /**
-     * \b Effects: Returns an ordered iterator to the first element contained in the priority queue.
+     * \b Effects: Returns an ordered iterator to the end of the priority queue.
      *
      * \b Note: Ordered iterators traverse the priority queue in heap order.
      * */
@@ -593,6 +589,7 @@ public:
 
         roots.splice(roots.end(), rhs.roots);
 
+        rhs.top_element = NULL;
         rhs.set_size(0);
 
         super_t::set_stability_count((std::max)(super_t::get_stability_count(),
@@ -736,7 +733,7 @@ private:
                 aux[node_rank] = n;
             }
 
-            if (super_t::operator()(top_element->value, n->value))
+            if (!super_t::operator()(n->value, top_element->value))
                 top_element = n;
         }
         while (it != roots.end());
@@ -747,7 +744,8 @@ private:
         add_children_to_root(erased_node);
 
         erased_node->~node();
-        allocator_type::deallocate(erased_node, 1);
+        allocator_type& alloc = *this;
+        alloc.deallocate(erased_node, 1);
 
         size_holder::decrement();
         if (!empty())

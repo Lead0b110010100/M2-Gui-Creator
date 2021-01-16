@@ -15,8 +15,8 @@
 // for small order, uniform asymptotic expansion for large order,
 // and iteration and root interlacing for negative order.
 //
-#ifndef _BESSEL_JY_ZERO_2013_01_18_HPP_
-  #define _BESSEL_JY_ZERO_2013_01_18_HPP_
+#ifndef BOOST_MATH_BESSEL_JY_ZERO_2013_01_18_HPP_
+  #define BOOST_MATH_BESSEL_JY_ZERO_2013_01_18_HPP_
 
   #include <algorithm>
   #include <boost/math/constants/constants.hpp>
@@ -83,8 +83,8 @@
         const T zeta;
       };
 
-      template<class T>
-      static T equation_as_9_5_26(const T& v, const T& ai_bi_root)
+      template<class T, class Policy>
+      static T equation_as_9_5_26(const T& v, const T& ai_bi_root, const Policy& pol)
       {
         BOOST_MATH_STD_USING // ADL of std names, needed for log, sqrt.
 
@@ -105,7 +105,7 @@
         // to refine the value of the estimate of the root of z
         // as a function of zeta.
 
-        const T v_pow_third(boost::math::cbrt(v));
+        const T v_pow_third(boost::math::cbrt(v, pol));
         const T v_pow_minus_two_thirds(T(1) / (v_pow_third * v_pow_third));
 
         // Obtain zeta using the order v combined with the m'th root of
@@ -126,13 +126,13 @@
         const T range_zmin = (std::max<T>)(z_estimate - T(1), T(1));
         const T range_zmax = z_estimate + T(1);
 
-        const int digits2_of_t = int(float(std::numeric_limits<T>::digits)
-                                     * (  log(float(std::numeric_limits<T>::radix))
-                                        / log(float(2))));
+        const int my_digits10 = static_cast<int>(static_cast<float>(boost::math::tools::digits<T>() * 0.301F));
 
-        const int digits2_for_root = (std::min)(digits2_of_t, std::numeric_limits<double>::digits);
+        // Select the maximum allowed iterations based on the number
+        // of decimal digits in the numeric type T, being at least 12.
+        const boost::uintmax_t iterations_allowed = static_cast<boost::uintmax_t>((std::max)(12, my_digits10 * 2));
 
-        boost::uintmax_t iteration_count = boost::uintmax_t(std::numeric_limits<T>::digits10 * 2);
+        boost::uintmax_t iterations_used = iterations_allowed;
 
         // Calculate the root of z as a function of zeta.
         const T z = boost::math::tools::newton_raphson_iterate(
@@ -140,10 +140,10 @@
           z_estimate,
           range_zmin,
           range_zmax,
-          digits2_for_root,
-          iteration_count);
+          (std::min)(boost::math::tools::digits<T>(), boost::math::tools::digits<float>()),
+          iterations_used);
 
-        static_cast<void>(iteration_count);
+        static_cast<void>(iterations_used);
 
         // Continue with the implementation of A&S Eq. 9.3.39.
         const T zsq_minus_one      = (z * z) - T(1);
@@ -165,10 +165,10 @@
 
       namespace cyl_bessel_j_zero_detail
       {
-        template<class T>
-        T equation_nist_10_21_40_a(const T& v)
+        template<class T, class Policy>
+        T equation_nist_10_21_40_a(const T& v, const Policy& pol)
         {
-          const T v_pow_third(boost::math::cbrt(v));
+          const T v_pow_third(boost::math::cbrt(v, pol));
           const T v_pow_minus_two_thirds(T(1) / (v_pow_third * v_pow_third));
 
           return v * (((((                         + T(0.043)
@@ -355,7 +355,7 @@
             else
             {
               // For larger v, use the first line of Eqs. 10.21.40 in the NIST Handbook.
-              guess = boost::math::detail::bessel_zero::cyl_bessel_j_zero_detail::equation_nist_10_21_40_a(v);
+              guess = boost::math::detail::bessel_zero::cyl_bessel_j_zero_detail::equation_nist_10_21_40_a(v, pol);
             }
           }
           else
@@ -370,10 +370,10 @@
             else
             {
               // Get an estimate of the m'th root of airy_ai.
-              const T airy_ai_root(boost::math::detail::airy_zero::airy_ai_zero_detail::initial_guess<T>(m));
+              const T airy_ai_root(boost::math::detail::airy_zero::airy_ai_zero_detail::initial_guess<T>(m, pol));
 
               // Use Eq. 9.5.26 in the A&S Handbook.
-              guess = boost::math::detail::bessel_zero::equation_as_9_5_26(v, airy_ai_root);
+              guess = boost::math::detail::bessel_zero::equation_as_9_5_26(v, airy_ai_root, pol);
             }
           }
 
@@ -383,10 +383,10 @@
 
       namespace cyl_neumann_zero_detail
       {
-        template<class T>
-        T equation_nist_10_21_40_b(const T& v)
+        template<class T, class Policy>
+        T equation_nist_10_21_40_b(const T& v, const Policy& pol)
         {
-          const T v_pow_third(boost::math::cbrt(v));
+          const T v_pow_third(boost::math::cbrt(v, pol));
           const T v_pow_minus_two_thirds(T(1) / (v_pow_third * v_pow_third));
 
           return v * (((((                         - T(0.001)
@@ -586,7 +586,7 @@
             else
             {
               // For larger v, use the second line of Eqs. 10.21.40 in the NIST Handbook.
-              guess = boost::math::detail::bessel_zero::cyl_neumann_zero_detail::equation_nist_10_21_40_b(v);
+              guess = boost::math::detail::bessel_zero::cyl_neumann_zero_detail::equation_nist_10_21_40_b(v, pol);
             }
           }
           else
@@ -601,10 +601,10 @@
             else
             {
               // Get an estimate of the m'th root of airy_bi.
-              const T airy_bi_root(boost::math::detail::airy_zero::airy_bi_zero_detail::initial_guess<T>(m));
+              const T airy_bi_root(boost::math::detail::airy_zero::airy_bi_zero_detail::initial_guess<T>(m, pol));
 
               // Use Eq. 9.5.26 in the A&S Handbook.
-              guess = boost::math::detail::bessel_zero::equation_as_9_5_26(v, airy_bi_root);
+              guess = boost::math::detail::bessel_zero::equation_as_9_5_26(v, airy_bi_root, pol);
             }
           }
 
@@ -614,4 +614,4 @@
     } // namespace bessel_zero
   } } } // namespace boost::math::detail
 
-#endif // _BESSEL_JY_ZERO_2013_01_18_HPP_
+#endif // BOOST_MATH_BESSEL_JY_ZERO_2013_01_18_HPP_

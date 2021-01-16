@@ -2,6 +2,11 @@
 
 // Copyright (c) 2007-2012 Barend Gehrels, Amsterdam, the Netherlands.
 
+// This file was modified by Oracle on 2014-2020.
+// Modifications copyright (c) 2014-2020 Oracle and/or its affiliates.
+
+// Contributed and/or modified by Adam Wulkiewicz, on behalf of Oracle
+
 // Parts of Boost.Geometry are redesigned from Geodan's Geographic Library
 // (geolib/GGL), copyright (c) 1995-2010 Geodan, Amsterdam, the Netherlands.
 
@@ -17,18 +22,19 @@
 #include <algorithm>
 #include <vector>
 
-#include <boost/range.hpp>
-
-#include <boost/geometry/core/cs.hpp>
-#include <boost/geometry/core/point_type.hpp>
-#include <boost/geometry/strategies/convex_hull.hpp>
-
-#include <boost/geometry/views/detail/range_type.hpp>
-
-#include <boost/geometry/policies/compare.hpp>
+#include <boost/range/begin.hpp>
+#include <boost/range/empty.hpp>
+#include <boost/range/end.hpp>
+#include <boost/range/size.hpp>
 
 #include <boost/geometry/algorithms/detail/for_each_range.hpp>
-#include <boost/geometry/views/reversible_view.hpp>
+#include <boost/geometry/core/assert.hpp>
+#include <boost/geometry/core/cs.hpp>
+#include <boost/geometry/core/point_type.hpp>
+#include <boost/geometry/policies/compare.hpp>
+#include <boost/geometry/strategies/convex_hull.hpp>
+#include <boost/geometry/strategies/side.hpp>
+#include <boost/geometry/views/detail/range_type.hpp>
 
 
 namespace boost { namespace geometry
@@ -42,31 +48,15 @@ namespace detail
 {
 
 
-template
-<
-    typename InputRange,
-    typename RangeIterator,
-    typename StrategyLess,
-    typename StrategyGreater
->
-struct get_extremes
+template <typename Geometry, typename Point, typename Less>
+inline void get_extremes(Geometry const& geometry,
+                         Point& left, Point& right,
+                         Less const& less)
 {
-    typedef typename point_type<InputRange>::type point_type;
-
-    point_type left, right;
-
-    bool first;
-
-    StrategyLess less;
-    StrategyGreater greater;
-
-    inline get_extremes()
-        : first(true)
-    {}
-
-    inline void apply(InputRange const& range)
+    bool first = true;
+    geometry::detail::for_each_range(geometry, [&](auto const& range)
     {
-        if (boost::size(range) == 0)
+        if (boost::empty(range))
         {
             return;
         }
@@ -77,19 +67,17 @@ struct get_extremes
         //  not persistent (in MSVC) this approach is not applicable
         //  for more ranges together)
 
-        RangeIterator left_it = boost::begin(range);
-        RangeIterator right_it = boost::begin(range);
+        auto left_it = boost::begin(range);
+        auto right_it = boost::begin(range);
 
-        for (RangeIterator it = boost::begin(range) + 1;
-            it != boost::end(range);
-            ++it)
+        for (auto it = ++boost::begin(range); it != boost::end(range); ++it)
         {
             if (less(*it, *left_it))
             {
                 left_it = it;
             }
 
-            if (greater(*it, *right_it))
+            if (less(*right_it, *it))
             {
                 right_it = it;
             }
@@ -112,48 +100,35 @@ struct get_extremes
                 left = *left_it;
             }
 
-            if (greater(*right_it, right))
+            if (less(right, *right_it))
             {
                 right = *right_it;
             }
         }
-    }
-};
+    });
+}
 
 
 template
 <
-    typename InputRange,
-    typename RangeIterator,
+    typename Geometry,
+    typename Point,
     typename Container,
     typename SideStrategy
 >
-struct assign_range
+inline void assign_ranges(Geometry const& geometry,
+                          Point const& most_left, Point const& most_right,
+                          Container& lower_points, Container& upper_points,
+                          SideStrategy const& side)
 {
-    Container lower_points, upper_points;
-
-    typedef typename point_type<InputRange>::type point_type;
-
-    point_type const& most_left;
-    point_type const& most_right;
-
-    inline assign_range(point_type const& left, point_type const& right)
-        : most_left(left)
-        , most_right(right)
-    {}
-
-    inline void apply(InputRange const& range)
+    geometry::detail::for_each_range(geometry, [&](auto const& range)
     {
-        typedef SideStrategy side;
-
         // Put points in one of the two output sequences
-        for (RangeIterator it = boost::begin(range);
-            it != boost::end(range);
-            ++it)
+        for (auto it = boost::begin(range); it != boost::end(range); ++it)
         {
             // check if it is lying most_left or most_right from the line
 
-            int dir = side::apply(most_left, most_right, *it);
+            int dir = side.apply(most_left, most_right, *it);
             switch(dir)
             {
                 case 1 : // left side
@@ -168,16 +143,14 @@ struct assign_range
                 //    -> all never part of hull
             }
         }
-    }
-};
+    });
+}
 
-template <typename Range>
-static inline void sort(Range& range)
+
+template <typename Range, typename Less>
+inline void sort(Range& range, Less const& less)
 {
-    typedef typename boost::range_value<Range>::type point_type;
-    typedef geometry::less<point_type> comparator;
-
-    std::sort(boost::begin(range), boost::end(range), comparator());
+    std::sort(boost::begin(range), boost::end(range), less);
 }
 
 } // namespace detail
@@ -187,9 +160,6 @@ static inline void sort(Range& range)
 /*!
 \brief Graham scan strategy to calculate convex hull
 \ingroup strategies
-\note Completely reworked version inspired on the sources listed below
-\see http://www.ddj.com/architect/201806315
-\see http://marknelson.us/2007/08/22/convex
  */
 template <typename InputGeometry, typename OutputPoint>
 class graham_andrew
@@ -230,103 +200,93 @@ public:
         // For the left boundary it is important that multiple points
         // are sorted from bottom to top. Therefore the less predicate
         // does not take the x-only template parameter (this fixes ticket #6019.
-        // For the right boundary it is not necessary (though also not harmful), 
+        // For the right boundary it is not necessary (though also not harmful),
         // because points are sorted from bottom to top in a later stage.
         // For symmetry and to get often more balanced lower/upper halves
         // we keep it.
 
-        typedef typename geometry::detail::range_type<InputGeometry>::type range_type;
+        typedef typename geometry::point_type<InputGeometry>::type point_type;
 
-        typedef typename boost::range_iterator
-            <
-                range_type const
-            >::type range_iterator;
+        point_type most_left, most_right;
 
-        detail::get_extremes
-            <
-                range_type,
-                range_iterator,
-                geometry::less<point_type>,
-                geometry::greater<point_type>
-            > extremes;
-        geometry::detail::for_each_range(geometry, extremes);
+        // TODO: User-defined CS-specific less-compare
+        geometry::less<point_type> less;
+
+        detail::get_extremes(geometry, most_left, most_right, less);
+
+        container_type lower_points, upper_points;
+
+        // TODO: User-defiend CS-specific side strategy
+        typename strategy::side::services::default_strategy<cs_tag>::type side;
 
         // Bounding left/right points
         // Second pass, now that extremes are found, assign all points
         // in either lower, either upper
-        detail::assign_range
-            <
-                range_type,
-                range_iterator,
-                container_type,
-                typename strategy::side::services::default_strategy<cs_tag>::type
-            > assigner(extremes.left, extremes.right);
-
-        geometry::detail::for_each_range(geometry, assigner);
-
+        detail::assign_ranges(geometry, most_left, most_right,
+                              lower_points, upper_points,
+                              side);
 
         // Sort both collections, first on x(, then on y)
-        detail::sort(assigner.lower_points);
-        detail::sort(assigner.upper_points);
-
-        //std::cout << boost::size(assigner.lower_points) << std::endl;
-        //std::cout << boost::size(assigner.upper_points) << std::endl;
+        detail::sort(lower_points, less);
+        detail::sort(upper_points, less);
 
         // And decide which point should be in the final hull
-        build_half_hull<-1>(assigner.lower_points, state.m_lower_hull,
-                extremes.left, extremes.right);
-        build_half_hull<1>(assigner.upper_points, state.m_upper_hull,
-                extremes.left, extremes.right);
+        build_half_hull<-1>(lower_points, state.m_lower_hull,
+                            most_left, most_right,
+                            side);
+        build_half_hull<1>(upper_points, state.m_upper_hull,
+                           most_left, most_right,
+                           side);
     }
 
 
     template <typename OutputIterator>
     inline void result(partitions const& state,
-                    OutputIterator out, bool clockwise)  const
+                       OutputIterator out,
+                       bool clockwise,
+                       bool closed) const
     {
         if (clockwise)
         {
-            output_range<iterate_forward>(state.m_upper_hull, out, false);
-            output_range<iterate_reverse>(state.m_lower_hull, out, true);
+            output_ranges(state.m_upper_hull, state.m_lower_hull, out, closed);
         }
         else
         {
-            output_range<iterate_forward>(state.m_lower_hull, out, false);
-            output_range<iterate_reverse>(state.m_upper_hull, out, true);
+            output_ranges(state.m_lower_hull, state.m_upper_hull, out, closed);
         }
     }
 
 
 private:
 
-    template <int Factor>
+    template <int Factor, typename SideStrategy>
     static inline void build_half_hull(container_type const& input,
             container_type& output,
-            point_type const& left, point_type const& right)
+            point_type const& left, point_type const& right,
+            SideStrategy const& side)
     {
         output.push_back(left);
         for(iterator it = input.begin(); it != input.end(); ++it)
         {
-            add_to_hull<Factor>(*it, output);
+            add_to_hull<Factor>(*it, output, side);
         }
-        add_to_hull<Factor>(right, output);
+        add_to_hull<Factor>(right, output, side);
     }
 
 
-    template <int Factor>
-    static inline void add_to_hull(point_type const& p, container_type& output)
+    template <int Factor, typename SideStrategy>
+    static inline void add_to_hull(point_type const& p, container_type& output,
+                                   SideStrategy const& side)
     {
-        typedef typename strategy::side::services::default_strategy<cs_tag>::type side;
-
         output.push_back(p);
-        register std::size_t output_size = output.size();
+        std::size_t output_size = output.size();
         while (output_size >= 3)
         {
             rev_iterator rit = output.rbegin();
-            point_type const& last = *rit++;
+            point_type const last = *rit++;
             point_type const& last2 = *rit++;
 
-            if (Factor * side::apply(*rit, last, last2) <= 0)
+            if (Factor * side.apply(*rit, last, last2) <= 0)
             {
                 // Remove last two points from stack, and add last again
                 // This is much faster then erasing the one but last.
@@ -343,28 +303,28 @@ private:
     }
 
 
-    template <iterate_direction Direction, typename OutputIterator>
-    static inline void output_range(container_type const& range,
-        OutputIterator out, bool skip_first)
+    template <typename OutputIterator>
+    static inline void output_ranges(container_type const& first, container_type const& second,
+                                     OutputIterator out, bool closed)
     {
-        typedef typename reversible_view<container_type const, Direction>::type view_type;
-        view_type view(range);
-        bool first = true;
-        for (typename boost::range_iterator<view_type const>::type it = boost::begin(view);
-            it != boost::end(view); ++it)
+        std::copy(boost::begin(first), boost::end(first), out);
+
+        BOOST_GEOMETRY_ASSERT(closed ? !boost::empty(second) : boost::size(second) > 1);
+        std::copy(++boost::rbegin(second), // skip the first Point
+                  closed ? boost::rend(second) : --boost::rend(second), // skip the last Point if open
+                  out);
+
+        typedef typename boost::range_size<container_type>::type size_type;
+        size_type const count = boost::size(first) + boost::size(second) - 1;
+        // count describes a closed case but comparison with min size of closed
+        // gives the result compatible also with open
+        // here core_detail::closure::minimum_ring_size<closed> could be used
+        if (count < 4)
         {
-            if (first && skip_first)
-            {
-                first = false;
-            }
-            else
-            {
-                *out = *it;
-                ++out;
-            }
+            // there should be only one missing
+            *out++ = *boost::begin(first);
         }
     }
-
 };
 
 }} // namespace strategy::convex_hull

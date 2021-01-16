@@ -13,3 +13,5 @@
 *.sbr
 *.cod
 *.log
+
+.vs

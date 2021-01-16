@@ -31,23 +31,12 @@ namespace boost
     {
        namespace detail
        {
-#if defined(__GNUC__) && (__GNUC__ < 3)
-        // gcc 2.x ignores function scope using declarations,
-        // put them in the scope of the enclosing namespace instead:
-        
-        using    ::std::abs;
-        using    ::std::sqrt;
-        using    ::std::log;
-        
-        using    ::std::numeric_limits;
-#endif
-        
         template<typename T, typename Policy>
         inline T    acosh_imp(const T x, const Policy& pol)
         {
             BOOST_MATH_STD_USING
             
-            if(x < 1)
+            if((x < 1) || (boost::math::isnan)(x))
             {
                return policies::raise_domain_error<T>(
                   "boost::math::acosh<%1%>(%1%)",
@@ -64,7 +53,7 @@ namespace boost
                 else if(x < 1.5f)
                 {
                    // This is just a rearrangement of the standard form below
-                   // devised to minimse loss of precision when x ~ 1:
+                   // devised to minimise loss of precision when x ~ 1:
                    T y = x - 1;
                    return boost::math::log1p(y + sqrt(y * y + 2 * y), pol);
                 }

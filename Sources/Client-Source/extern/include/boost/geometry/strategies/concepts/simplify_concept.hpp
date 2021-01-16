@@ -4,6 +4,10 @@
 // Copyright (c) 2008-2012 Bruno Lalande, Paris, France.
 // Copyright (c) 2009-2012 Mateusz Loskot, London, UK.
 
+// This file was modified by Oracle on 2020.
+// Modifications copyright (c) 2020, Oracle and/or its affiliates.
+// Contributed and/or modified by Adam Wulkiewicz, on behalf of Oracle
+
 // Parts of Boost.Geometry are redesigned from Geodan's Geographic Library
 // (geolib/GGL), copyright (c) 1995-2010 Geodan, Amsterdam, the Netherlands.
 
@@ -14,16 +18,18 @@
 #ifndef BOOST_GEOMETRY_STRATEGIES_CONCEPTS_SIMPLIFY_CONCEPT_HPP
 #define BOOST_GEOMETRY_STRATEGIES_CONCEPTS_SIMPLIFY_CONCEPT_HPP
 
-#include <vector>
 #include <iterator>
+#include <type_traits>
+#include <vector>
 
 #include <boost/concept_check.hpp>
+#include <boost/core/ignore_unused.hpp>
 
 #include <boost/geometry/geometries/point.hpp>
 #include <boost/geometry/strategies/concepts/distance_concept.hpp>
 
 
-namespace boost { namespace geometry { namespace concept
+namespace boost { namespace geometry { namespace concepts
 {
 
 
@@ -53,16 +59,16 @@ private :
                     ApplyMethod
                 >::type parameter_types;
 
-            typedef typename boost::mpl::if_
+            typedef std::conditional_t
                 <
-                    ft::is_member_function_pointer<ApplyMethod>,
-                    boost::mpl::int_<1>,
-                    boost::mpl::int_<0>
-                >::type base_index;
+                    ft::is_member_function_pointer<ApplyMethod>::value,
+                    std::integral_constant<int, 1>,
+                    std::integral_constant<int, 0>
+                > base_index;
 
             BOOST_CONCEPT_ASSERT
                 (
-                    (concept::PointSegmentDistanceStrategy<ds_type, Point, Point>)
+                    (concepts::PointSegmentDistanceStrategy<ds_type, Point, Point>)
                 );
 
             Strategy *str = 0;
@@ -75,7 +81,8 @@ private :
             //    - floating point value
             str->apply(*v1, std::back_inserter(*v2), 1.0);
 
-            boost::ignore_unused_variable_warning(str);
+            boost::ignore_unused<parameter_types, base_index>();
+            boost::ignore_unused(str);
         }
     };
 
@@ -89,6 +96,6 @@ public :
 
 
 
-}}} // namespace boost::geometry::concept
+}}} // namespace boost::geometry::concepts
 
 #endif // BOOST_GEOMETRY_STRATEGIES_CONCEPTS_SIMPLIFY_CONCEPT_HPP

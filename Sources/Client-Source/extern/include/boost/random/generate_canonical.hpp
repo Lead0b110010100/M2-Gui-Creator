@@ -7,7 +7,7 @@
  *
  * See http://www.boost.org for most recent version including documentation.
  *
- * $Id: generate_canonical.hpp 72951 2011-07-07 04:57:37Z steven_watanabe $
+ * $Id$
  *
  */
 
@@ -19,7 +19,6 @@
 #include <boost/config/no_tr1/cmath.hpp>
 #include <boost/limits.hpp>
 #include <boost/type_traits/is_integral.hpp>
-#include <boost/math/special_functions.hpp>
 #include <boost/random/detail/signed_unsigned_tools.hpp>
 #include <boost/random/detail/generator_bits.hpp>
 
@@ -29,7 +28,7 @@ namespace random {
 namespace detail {
 
 template<class RealType, std::size_t bits, class URNG>
-RealType generate_canonical_impl(URNG& g, boost::mpl::true_ /*is_integral*/)
+RealType generate_canonical_impl(URNG& g, boost::true_type /*is_integral*/)
 {
     using std::pow;
     typedef typename URNG::result_type base_result;
@@ -49,13 +48,12 @@ RealType generate_canonical_impl(URNG& g, boost::mpl::true_ /*is_integral*/)
 }
 
 template<class RealType, std::size_t bits, class URNG>
-RealType generate_canonical_impl(URNG& g, boost::mpl::false_ /*is_integral*/)
+RealType generate_canonical_impl(URNG& g, boost::false_type /*is_integral*/)
 {
     using std::pow;
     using std::floor;
     BOOST_ASSERT((g.min)() == 0);
     BOOST_ASSERT((g.max)() == 1);
-    typedef typename URNG::result_type base_result;
     std::size_t digits = std::numeric_limits<RealType>::digits;
     std::size_t engine_bits = detail::generator_bits<URNG>::value();
     std::size_t b = (std::min)(bits, digits);
@@ -81,7 +79,7 @@ template<class RealType, std::size_t bits, class URNG>
 RealType generate_canonical(URNG& g)
 {
     RealType result = detail::generate_canonical_impl<RealType, bits>(
-        g, boost::is_integral<typename URNG::result_type>());
+        g, boost::random::traits::is_integral<typename URNG::result_type>());
     BOOST_ASSERT(result >= 0);
     BOOST_ASSERT(result <= 1);
     if(result == 1) {

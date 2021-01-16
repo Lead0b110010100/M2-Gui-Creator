@@ -49,16 +49,16 @@
   </ImportGroup>
   <PropertyGroup Label="UserMacros" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
-    <OutDir>$(SolutionDir)binary\</OutDir>
+    <OutDir>$(SolutionDir)..\Client\Metin2\</OutDir>
     <TargetName>Metin2$(Configuration)</TargetName>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Distribute|Win32'">
-    <OutDir>$(SolutionDir)binary\</OutDir>
+    <OutDir>$(SolutionDir)..\Client\Metin2\</OutDir>
     <TargetName>Metin2$(Configuration)</TargetName>
     <LinkIncremental>false</LinkIncremental>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
-    <OutDir>$(SolutionDir)binary\</OutDir>
+    <OutDir>$(SolutionDir)..\Client\Metin2\</OutDir>
     <TargetName>Metin2$(Configuration)</TargetName>
     <LinkIncremental>false</LinkIncremental>
   </PropertyGroup>

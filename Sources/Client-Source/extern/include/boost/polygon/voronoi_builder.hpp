@@ -26,14 +26,18 @@ namespace boost {
 namespace polygon {
 // GENERAL INFO:
 // The sweepline algorithm implementation to compute Voronoi diagram of
-// points and non-intersecting segments (except endpoints).
+// points and non-intersecting segments (excluding endpoints).
 // Complexity - O(N*logN), memory usage - O(N), where N is the total number
-// of input geometries. Input geometries should have integer coordinate type.
+// of input geometries.
+//
+// CONTRACT:
+// 1) Input geometries should have integral (e.g. int32, int64) coordinate type.
+// 2) Input geometries should not intersect except their endpoints.
 //
 // IMPLEMENTATION DETAILS:
-// Each input point creates one site event. Each input segment creates three
-// site events: two for its endpoints and one for the segment itself (this is
-// made to simplify output construction). All the site events are constructed
+// Each input point creates one input site. Each input segment creates three
+// input sites: two for its endpoints and one for the segment itself (this is
+// made to simplify output construction). All the site objects are constructed
 // and sorted at the algorithm initialization step. Priority queue is used to
 // dynamically hold circle events. At each step of the algorithm execution the
 // leftmost event is retrieved by comparing the current site event and the
@@ -153,12 +157,12 @@ class voronoi_builder {
   typedef std::map< key_type, value_type, node_comparer_type > beach_line_type;
   typedef typename beach_line_type::iterator beach_line_iterator;
   typedef std::pair<circle_event_type, beach_line_iterator> event_type;
-  typedef struct {
+  struct event_comparison_type {
     bool operator()(const event_type& lhs, const event_type& rhs) const {
       return predicate(rhs.first, lhs.first);
     }
     event_comparison_predicate predicate;
-  } event_comparison_type;
+  };
   typedef detail::ordered_queue<event_type, event_comparison_type>
     circle_event_queue_type;
   typedef std::pair<point_type, beach_line_iterator> end_point_type;

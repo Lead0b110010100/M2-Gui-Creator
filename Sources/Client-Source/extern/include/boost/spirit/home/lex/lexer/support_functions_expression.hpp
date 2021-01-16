@@ -4,14 +4,16 @@
 //  Distributed under the Boost Software License, Version 1.0. (See accompanying 
 //  file LICENSE_1_0.txt or copy at http://www.boost.org/LICENSE_1_0.txt)
 
-#if !defined(SPIRIT_LEX_SUPPORT_FUNCTIONS_EXPRESSION_MAR_22_2011_0711PM)
-#define SPIRIT_LEX_SUPPORT_FUNCTIONS_EXPRESSION_MAR_22_2011_0711PM
+#ifndef BOOST_SPIRIT_LEX_LEXER_SUPPORT_FUNCTIONS_EXPRESSION_HPP
+#define BOOST_SPIRIT_LEX_LEXER_SUPPORT_FUNCTIONS_EXPRESSION_HPP
 
 #if defined(_MSC_VER)
 #pragma once
 #endif
 
-#include <boost/spirit/include/phoenix_core.hpp>
+#include <boost/phoenix/core/expression.hpp>
+#include <boost/phoenix/core/v2_eval.hpp>
+#include <boost/proto/proto_fwd.hpp> // for transform placeholders
 
 namespace boost { namespace spirit { namespace lex
 {
@@ -21,37 +23,6 @@ namespace boost { namespace spirit { namespace lex
 }}}
 
 ///////////////////////////////////////////////////////////////////////////////
-#ifndef BOOST_SPIRIT_USE_PHOENIX_V3
-
-namespace boost { namespace spirit { namespace lex
-{
-    namespace expression
-    {
-        template <typename Eval>
-        struct less
-        {
-            typedef phoenix::actor<lex::less_type<Eval> > type;
-
-            static type make(Eval const & eval)
-            {
-                return lex::less_type<Eval>(eval);
-            }
-        };
-
-        template <typename IdType, typename State>
-        struct lookahead
-        {
-            typedef phoenix::actor<lex::lookahead_type<IdType, State> > type;
-
-            static type make(IdType const & id_type, State const & state)
-            {
-                return lex::lookahead_type<IdType, State>(id_type, state);
-            }
-        };
-    }
-}}}
-
-#else // BOOST_SPIRIT_USE_PHOENIX_V3
 
 BOOST_PHOENIX_DEFINE_EXPRESSION(
     (boost)(spirit)(lex)(less)
@@ -129,7 +100,5 @@ namespace boost { namespace phoenix
         >
     {};
 }}
-
-#endif // BOOST_SPIRIT_USE_PHOENIX_V3
 
 #endif

@@ -10,6 +10,7 @@
 #ifndef BOOST_POLYGON_DETAIL_VORONOI_ROBUST_FPT
 #define BOOST_POLYGON_DETAIL_VORONOI_ROBUST_FPT
 
+#include <algorithm>
 #include <cmath>
 
 // Geometry predicates with floating-point variables usually require
@@ -95,12 +96,6 @@ class robust_fpt {
   floating_point_type fpv() const { return fpv_; }
   relative_error_type re() const { return re_; }
   relative_error_type ulp() const { return re_; }
-
-  robust_fpt& operator=(const robust_fpt& that) {
-    this->fpv_ = that.fpv_;
-    this->re_ = that.re_;
-    return *this;
-  }
 
   bool has_pos_value() const {
     return is_pos(fpv_);

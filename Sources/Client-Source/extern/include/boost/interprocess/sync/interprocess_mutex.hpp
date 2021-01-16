@@ -15,9 +15,13 @@
 #ifndef BOOST_INTERPROCESS_MUTEX_HPP
 #define BOOST_INTERPROCESS_MUTEX_HPP
 
-/// @cond
+#if !defined(BOOST_INTERPROCESS_DOXYGEN_INVOKED)
 
-#if (defined _MSC_VER) && (_MSC_VER >= 1200)
+#ifndef BOOST_CONFIG_HPP
+#  include <boost/config.hpp>
+#endif
+#
+#if defined(BOOST_HAS_PRAGMA_ONCE)
 #  pragma once
 #endif
 
@@ -26,6 +30,8 @@
 #include <boost/interprocess/detail/workaround.hpp>
 #include <boost/interprocess/detail/posix_time_types_wrk.hpp>
 #include <boost/assert.hpp>
+#include <boost/interprocess/sync/detail/common_algorithms.hpp>
+
 
 #if !defined(BOOST_INTERPROCESS_FORCE_GENERIC_EMULATION) && defined (BOOST_INTERPROCESS_POSIX_PROCESS_SHARED)
    #include <boost/interprocess/sync/posix/mutex.hpp>
@@ -50,7 +56,7 @@ class mutex_traits;
 
 #endif
 
-/// @endcond
+#endif   //#ifndef BOOST_INTERPROCESS_DOXYGEN_INVOKED
 
 //!\file
 //!Describes a mutex class that can be placed in memory shared by
@@ -65,7 +71,7 @@ class interprocess_condition;
 //!shared between processes. Allows timed lock tries
 class interprocess_mutex
 {
-   /// @cond
+   #if !defined(BOOST_INTERPROCESS_DOXYGEN_INVOKED)
    //Non-copyable
    interprocess_mutex(const interprocess_mutex &);
    interprocess_mutex &operator=(const interprocess_mutex &);
@@ -89,7 +95,7 @@ class interprocess_mutex
       #error "Unknown platform for interprocess_mutex"
    #endif
 
-   /// @endcond
+   #endif   //#ifndef BOOST_INTERPROCESS_DOXYGEN_INVOKED
    public:
 
    //!Constructor.
@@ -127,7 +133,7 @@ class interprocess_mutex
    //!Throws: interprocess_exception on error.
    void unlock();
 
-   /// @cond
+   #if !defined(BOOST_INTERPROCESS_DOXYGEN_INVOKED)
    internal_mutex_type &internal_mutex()
    {  return m_mutex;   }
 
@@ -136,7 +142,7 @@ class interprocess_mutex
 
    private:
    internal_mutex_type m_mutex;
-   /// @endcond
+   #endif   //#ifndef BOOST_INTERPROCESS_DOXYGEN_INVOKED
 };
 
 }  //namespace interprocess {
@@ -151,21 +157,7 @@ inline interprocess_mutex::interprocess_mutex(){}
 inline interprocess_mutex::~interprocess_mutex(){}
 
 inline void interprocess_mutex::lock()
-{
-   #ifdef BOOST_INTERPROCESS_ENABLE_TIMEOUT_WHEN_LOCKING
-      boost::posix_time::ptime wait_time
-         = boost::posix_time::microsec_clock::universal_time()
-         + boost::posix_time::milliseconds(BOOST_INTERPROCESS_TIMEOUT_WHEN_LOCKING_DURATION_MS);
-      if (!m_mutex.timed_lock(wait_time))
-      {
-         throw interprocess_exception(timeout_when_locking_error
-                                     , "Interprocess mutex timeout when locking. Possible deadlock: "
-                                       "owner died without unlocking?");
-      }
-   #else
-      m_mutex.lock();
-   #endif
-}
+{  ipcdetail::timeout_when_locking_aware_lock(m_mutex);  }
 
 inline bool interprocess_mutex::try_lock()
 { return m_mutex.try_lock(); }

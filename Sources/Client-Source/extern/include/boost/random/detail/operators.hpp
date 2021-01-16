@@ -7,7 +7,7 @@
  *
  * See http://www.boost.org for most recent version including documentation.
  *
- * $Id: operators.hpp 71018 2011-04-05 21:27:52Z steven_watanabe $
+ * $Id$
  */
 
 #ifndef BOOST_RANDOM_DETAIL_OPERATORS_HPP
@@ -43,7 +43,7 @@
 
 #endif
 
-#if defined(__BORLANDC__)
+#if defined(BOOST_BORLANDC)
 
 #define BOOST_RANDOM_DETAIL_EQUALITY_OPERATOR(T, lhs, rhs)              \
     bool operator==(const T& rhs) const                                 \

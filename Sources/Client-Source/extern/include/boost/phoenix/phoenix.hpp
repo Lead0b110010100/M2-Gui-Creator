@@ -9,6 +9,7 @@
 #define BOOST_PHOENIX_PHOENIX_HPP
 
 #include <boost/phoenix/core.hpp>
+#include <boost/phoenix/debug.hpp>
 #include <boost/phoenix/function.hpp>
 #include <boost/phoenix/operator.hpp>
 #include <boost/phoenix/statement.hpp>
@@ -16,5 +17,6 @@
 #include <boost/phoenix/scope.hpp>
 #include <boost/phoenix/bind.hpp>
 #include <boost/phoenix/stl.hpp>
+#include <boost/phoenix/fusion.hpp>
 
 #endif

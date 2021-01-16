@@ -11,7 +11,11 @@
 #ifndef BOOST_INTERPROCESS_WINDOWS_NAMED_SYNC_HPP
 #define BOOST_INTERPROCESS_WINDOWS_NAMED_SYNC_HPP
 
-#if (defined _MSC_VER) && (_MSC_VER >= 1200)
+#ifndef BOOST_CONFIG_HPP
+#  include <boost/config.hpp>
+#endif
+#
+#if defined(BOOST_HAS_PRAGMA_ONCE)
 #  pragma once
 #endif
 
@@ -19,7 +23,7 @@
 #include <boost/interprocess/detail/workaround.hpp>
 #include <boost/interprocess/creation_tags.hpp>
 #include <boost/interprocess/permissions.hpp>
-#include <boost/interprocess/detail/tmp_dir_helpers.hpp>
+#include <boost/interprocess/detail/shared_dir_helpers.hpp>
 #include <boost/interprocess/sync/windows/sync_utils.hpp>
 #include <boost/interprocess/errors.hpp>
 #include <boost/interprocess/exceptions.hpp>
@@ -47,12 +51,12 @@ inline windows_named_sync_interface::~windows_named_sync_interface()
 
 class windows_named_sync
 {
-   /// @cond
+   #if !defined(BOOST_INTERPROCESS_DOXYGEN_INVOKED)
 
    //Non-copyable
    windows_named_sync(const windows_named_sync &);
    windows_named_sync &operator=(const windows_named_sync &);
-   /// @endcond
+   #endif   //#ifndef BOOST_INTERPROCESS_DOXYGEN_INVOKED
 
    public:
    windows_named_sync();
@@ -61,11 +65,11 @@ class windows_named_sync
 
    static bool remove(const char *name);
 
-   /// @cond
+   #if !defined(BOOST_INTERPROCESS_DOXYGEN_INVOKED)
    private:
    void *m_file_hnd;
 
-   /// @endcond
+   #endif   //#ifndef BOOST_INTERPROCESS_DOXYGEN_INVOKED
 };
 
 inline windows_named_sync::windows_named_sync()
@@ -79,7 +83,7 @@ inline void windows_named_sync::close(windows_named_sync_interface &sync_interfa
    winapi::interprocess_overlapped overlapped;
    if(winapi::lock_file_ex
       (m_file_hnd, winapi::lockfile_exclusive_lock, 0, sizeof_file_info, 0, &overlapped)){
-      if(winapi::set_file_pointer_ex(m_file_hnd, sizeof(sync_id::internal_type), 0, winapi::file_begin)){
+      if(winapi::set_file_pointer(m_file_hnd, sizeof(sync_id::internal_type), 0, winapi::file_begin)){
          const void *buf = sync_interface.buffer_with_final_data_to_file();
 
          unsigned long written_or_read = 0;
@@ -106,7 +110,7 @@ inline void windows_named_sync::open_or_create
    //Use a file to emulate POSIX lifetime semantics. After this logic
    //we'll obtain the ID of the native handle to open in aux_str
    {
-      create_tmp_and_clean_old_and_get_filename(name, aux_str);
+      create_shared_dir_cleaning_old_and_get_filepath(name, aux_str);
       //Create a file with required permissions.
       m_file_hnd = winapi::create_file
          ( aux_str.c_str()
@@ -198,7 +202,7 @@ inline bool windows_named_sync::remove(const char *name)
    try{
       //Make sure a temporary path is created for shared memory
       std::string semfile;
-      ipcdetail::tmp_filename(name, semfile);
+      ipcdetail::shared_filepath(name, semfile);
       return winapi::unlink_file(semfile.c_str());
    }
    catch(...){

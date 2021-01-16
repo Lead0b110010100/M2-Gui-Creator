@@ -154,7 +154,7 @@ namespace boost { namespace math {
 
             // modified Lentz's method, see
             // Lentz, Applied Optics, vol 15, 668 (1976)
-            tolerance = 2 * policies::get_epsilon<T, Policy>();;
+            tolerance = 2 * policies::get_epsilon<T, Policy>();
          tiny = sqrt(tools::min_value<T>());
          C = f = tiny;                           // b0 = 0, replace with tiny
          D = 0;
@@ -286,8 +286,11 @@ namespace boost { namespace math {
             reflect = true;
             v = -v;                             // v is non-negative from here
          }
-         if(v > static_cast<T>((std::numeric_limits<int>::max)()))
-            policies::raise_evaluation_error<T>(function, "Order of Bessel function is too large to evaluate: got %1%", v, pol);
+         if (v > static_cast<T>((std::numeric_limits<int>::max)()))
+         {
+            *J = *Y = policies::raise_evaluation_error<T>(function, "Order of Bessel function is too large to evaluate: got %1%", v, pol);
+            return 1;
+         }
          n = iround(v, pol);
          u = v - n;                              // -1/2 <= u < 1/2
 
@@ -373,13 +376,13 @@ namespace boost { namespace math {
          {
             if(kind&need_y)
             {
-               Yv = asymptotic_bessel_y_large_x_2(v, x);
+               Yv = asymptotic_bessel_y_large_x_2(v, x, pol);
             }
             else
                Yv = std::numeric_limits<T>::quiet_NaN(); // any value will do, we're not using it.
             if(kind&need_j)
             {
-               Jv = asymptotic_bessel_j_large_x_2(v, x);
+               Jv = asymptotic_bessel_j_large_x_2(v, x, pol);
             }
             else
                Jv = std::numeric_limits<T>::quiet_NaN(); // any value will do, we're not using it.
@@ -402,8 +405,8 @@ namespace boost { namespace math {
             T mod_v = fmod(T(v / 2 + 0.25f), T(2));
             T sx = sin(x);
             T cx = cos(x);
-            T sv = sin_pi(mod_v);
-            T cv = cos_pi(mod_v);
+            T sv = boost::math::sin_pi(mod_v, pol);
+            T cv = boost::math::cos_pi(mod_v, pol);
 
             T sc = sx * cv - sv * cx; // == sin(chi);
             T cc = cx * cv + sx * sv; // == cos(chi);
@@ -455,6 +458,7 @@ namespace boost { namespace math {
             CF1_jy(v, x, &fv, &s, pol);
             // tiny initial value to prevent overflow
             T init = sqrt(tools::min_value<T>());
+            BOOST_MATH_INSTRUMENT_VARIABLE(init);
             prev = fv * s * init;
             current = s * init;
             if(v < max_factorial<T>::value)
@@ -506,7 +510,7 @@ namespace boost { namespace math {
             T t = u / x - fu;                   // t = J'/J
             gamma = (p - t) / q;
             //
-            // We can't allow gamma to cancel out to zero competely as it messes up
+            // We can't allow gamma to cancel out to zero completely as it messes up
             // the subsequent logic.  So pretend that one bit didn't cancel out
             // and set to a suitably small value.  The only test case we've been able to
             // find for this, is when v = 8.5 and x = 4*PI.
@@ -515,7 +519,14 @@ namespace boost { namespace math {
             {
                gamma = u * tools::epsilon<T>() / x;
             }
+            BOOST_MATH_INSTRUMENT_VARIABLE(current);
+            BOOST_MATH_INSTRUMENT_VARIABLE(W);
+            BOOST_MATH_INSTRUMENT_VARIABLE(q);
+            BOOST_MATH_INSTRUMENT_VARIABLE(gamma);
+            BOOST_MATH_INSTRUMENT_VARIABLE(p);
+            BOOST_MATH_INSTRUMENT_VARIABLE(t);
             Ju = sign(current) * sqrt(W / (q + gamma * (p - t)));
+            BOOST_MATH_INSTRUMENT_VARIABLE(Ju);
 
             Jv = Ju * ratio;                    // normalization
 
@@ -550,11 +561,11 @@ namespace boost { namespace math {
          if (reflect)
          {
             if((sp != 0) && (tools::max_value<T>() * fabs(Yv_scale) < fabs(sp * Yv)))
-               *J = org_kind & need_j ? T(-sign(sp) * sign(Yv) * sign(Yv_scale) * policies::raise_overflow_error<T>(function, 0, pol)) : T(0);
+               *J = org_kind & need_j ? T(-sign(sp) * sign(Yv) * (Yv_scale != 0 ? sign(Yv_scale) : 1) * policies::raise_overflow_error<T>(function, 0, pol)) : T(0);
             else
                *J = cp * Jv - (sp == 0 ? T(0) : T((sp * Yv) / Yv_scale));     // reflection formula
             if((cp != 0) && (tools::max_value<T>() * fabs(Yv_scale) < fabs(cp * Yv)))
-               *Y = org_kind & need_y ? T(-sign(cp) * sign(Yv) * sign(Yv_scale) * policies::raise_overflow_error<T>(function, 0, pol)) : T(0);
+               *Y = org_kind & need_y ? T(-sign(cp) * sign(Yv) * (Yv_scale != 0 ? sign(Yv_scale) : 1) * policies::raise_overflow_error<T>(function, 0, pol)) : T(0);
             else
                *Y = (sp != 0 ? sp * Jv : T(0)) + (cp == 0 ? T(0) : T((cp * Yv) / Yv_scale));
          }
@@ -575,4 +586,3 @@ namespace boost { namespace math {
 }} // namespaces
 
 #endif // BOOST_MATH_BESSEL_JY_HPP
-

@@ -2,7 +2,11 @@
 //
 // minmaxdist used in R-tree k nearest neighbors query
 //
-// Copyright (c) 2011-2013 Adam Wulkiewicz, Lodz, Poland.
+// Copyright (c) 2011-2014 Adam Wulkiewicz, Lodz, Poland.
+//
+// This file was modified by Oracle on 2020.
+// Modifications copyright (c) 2020 Oracle and/or its affiliates.
+// Contributed and/or modified by Adam Wulkiewicz, on behalf of Oracle
 //
 // Use, modification and distribution is subject to the Boost Software License,
 // Version 1.0. (See accompanying file LICENSE_1_0.txt or copy at
@@ -13,6 +17,8 @@
 
 #include <boost/geometry/algorithms/distance.hpp>
 #include <boost/geometry/algorithms/comparable_distance.hpp>
+
+#include <boost/geometry/core/static_assert.hpp>
 
 #include <boost/geometry/index/detail/algorithms/diff_abs.hpp>
 #include <boost/geometry/index/detail/algorithms/sum_for_indexable.hpp>
@@ -28,7 +34,7 @@ template <
     size_t DimensionIndex>
 struct smallest_for_indexable_dimension<Point, BoxIndexable, box_tag, minmaxdist_tag, DimensionIndex>
 {
-    typedef typename geometry::default_distance_result<Point, BoxIndexable>::type result_type;
+    typedef typename geometry::default_comparable_distance_result<Point, BoxIndexable>::type result_type;
 
     inline static result_type apply(Point const& pt, BoxIndexable const& i, result_type const& maxd)
     {
@@ -64,16 +70,15 @@ struct smallest_for_indexable_dimension<Point, BoxIndexable, box_tag, minmaxdist
 template <typename Point, typename Indexable, typename IndexableTag>
 struct minmaxdist_impl
 {
-    BOOST_MPL_ASSERT_MSG(
-        (false),
-        NOT_IMPLEMENTED_FOR_THIS_INDEXABLE_TAG_TYPE,
-        (minmaxdist_impl));
+    BOOST_GEOMETRY_STATIC_ASSERT_FALSE(
+        "Not implemented for this Indexable type.",
+        Point, Indexable, IndexableTag);
 };
 
 template <typename Point, typename Indexable>
 struct minmaxdist_impl<Point, Indexable, point_tag>
 {
-    typedef typename geometry::default_distance_result<Point, Indexable>::type result_type;
+    typedef typename geometry::default_comparable_distance_result<Point, Indexable>::type result_type;
 
     inline static result_type apply(Point const& pt, Indexable const& i)
     {
@@ -84,7 +89,7 @@ struct minmaxdist_impl<Point, Indexable, point_tag>
 template <typename Point, typename Indexable>
 struct minmaxdist_impl<Point, Indexable, box_tag>
 {
-    typedef typename geometry::default_distance_result<Point, Indexable>::type result_type;
+    typedef typename geometry::default_comparable_distance_result<Point, Indexable>::type result_type;
 
     inline static result_type apply(Point const& pt, Indexable const& i)
     {
@@ -104,7 +109,7 @@ struct minmaxdist_impl<Point, Indexable, box_tag>
  * This is comparable distace.
  */
 template <typename Point, typename Indexable>
-typename geometry::default_distance_result<Point, Indexable>::type
+typename geometry::default_comparable_distance_result<Point, Indexable>::type
 minmaxdist(Point const& pt, Indexable const& i)
 {
     return detail::minmaxdist_impl<

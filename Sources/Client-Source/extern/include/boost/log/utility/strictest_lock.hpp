@@ -1,5 +1,5 @@
 /*
- *          Copyright Andrey Semashev 2007 - 2013.
+ *          Copyright Andrey Semashev 2007 - 2015.
  * Distributed under the Boost Software License, Version 1.0.
  *    (See accompanying file LICENSE_1_0.txt or copy at
  *          http://www.boost.org/LICENSE_1_0.txt)
@@ -79,6 +79,11 @@ struct thread_access_mode_of< lock_guard< MutexT > > : mpl::integral_c< lock_acc
 };
 
 template< typename MutexT >
+struct thread_access_mode_of< shared_lock_guard< MutexT > > : mpl::integral_c< lock_access_mode, shared_access >
+{
+};
+
+template< typename MutexT >
 struct thread_access_mode_of< unique_lock< MutexT > > : mpl::integral_c< lock_access_mode, exclusive_access >
 {
 };
@@ -100,6 +105,11 @@ struct thread_access_mode_of< boost::log::aux::exclusive_lock_guard< MutexT > > 
 
 template< typename MutexT >
 struct thread_access_mode_of< boost::log::aux::shared_lock_guard< MutexT > > : mpl::integral_c< lock_access_mode, shared_access >
+{
+};
+
+template< typename MutexT1, typename MutexT2 >
+struct thread_access_mode_of< boost::log::aux::multiple_unique_lock2< MutexT1, MutexT2 > > : mpl::integral_c< lock_access_mode, exclusive_access >
 {
 };
 

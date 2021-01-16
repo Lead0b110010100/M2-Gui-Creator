@@ -1,5 +1,5 @@
 /*
- *          Copyright Andrey Semashev 2007 - 2013.
+ *          Copyright Andrey Semashev 2007 - 2015.
  * Distributed under the Boost Software License, Version 1.0.
  *    (See accompanying file LICENSE_1_0.txt or copy at
  *          http://www.boost.org/LICENSE_1_0.txt)
@@ -343,21 +343,21 @@ struct date_time_format_parser_callback :
     typedef CharT char_type;
 
     //! Destructor
-    virtual ~date_time_format_parser_callback() {}
+    ~date_time_format_parser_callback() BOOST_OVERRIDE {}
 
     /*!
      * \brief The function is called when the parser discovers a string literal in the format string
      *
      * \param lit The string of characters not interpreted as a placeholder
      */
-    virtual void on_literal(iterator_range< const char_type* > const& lit) = 0;
+    void on_literal(iterator_range< const char_type* > const& lit) BOOST_OVERRIDE = 0;
 
     /*!
      * \brief The method is called when an unknown placeholder is found in the format string
      *
      * \param ph The placeholder with the leading percent sign
      */
-    virtual void on_placeholder(iterator_range< const char_type* > const& ph)
+    void on_placeholder(iterator_range< const char_type* > const& ph) BOOST_OVERRIDE
     {
         // By default interpret all unrecognized placeholders as literals
         on_literal(ph);

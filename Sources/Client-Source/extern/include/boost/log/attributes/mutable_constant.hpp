@@ -1,5 +1,5 @@
 /*
- *          Copyright Andrey Semashev 2007 - 2013.
+ *          Copyright Andrey Semashev 2007 - 2015.
  * Distributed under the Boost Software License, Version 1.0.
  *    (See accompanying file LICENSE_1_0.txt or copy at
  *          http://www.boost.org/LICENSE_1_0.txt)
@@ -17,10 +17,10 @@
 
 #include <boost/static_assert.hpp>
 #include <boost/smart_ptr/intrusive_ptr.hpp>
-#include <boost/mpl/if.hpp>
 #include <boost/move/core.hpp>
-#include <boost/move/utility.hpp>
+#include <boost/move/utility_core.hpp>
 #include <boost/type_traits/is_void.hpp>
+#include <boost/type_traits/conditional.hpp>
 #include <boost/log/detail/config.hpp>
 #include <boost/log/detail/locks.hpp>
 #include <boost/log/attributes/attribute.hpp>
@@ -60,7 +60,7 @@ template<
     typename MutexT = void,
     typename ScopedWriteLockT =
 #ifndef BOOST_LOG_NO_THREADS
-        typename mpl::if_c<
+        typename boost::conditional<
             boost::log::aux::is_exclusively_lockable< MutexT >::value,
             boost::log::aux::exclusive_lock_guard< MutexT >,
             void
@@ -70,7 +70,7 @@ template<
 #endif // BOOST_LOG_NO_THREADS
     typename ScopedReadLockT =
 #ifndef BOOST_LOG_NO_THREADS
-        typename mpl::if_c<
+        typename boost::conditional<
             boost::log::aux::is_shared_lockable< MutexT >::value,
             boost::log::aux::shared_lock_guard< MutexT >,
             ScopedWriteLockT

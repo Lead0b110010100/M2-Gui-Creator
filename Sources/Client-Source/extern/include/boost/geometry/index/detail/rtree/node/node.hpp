@@ -2,7 +2,11 @@
 //
 // R-tree nodes
 //
-// Copyright (c) 2011-2013 Adam Wulkiewicz, Lodz, Poland.
+// Copyright (c) 2011-2015 Adam Wulkiewicz, Lodz, Poland.
+//
+// This file was modified by Oracle on 2019-2020.
+// Modifications copyright (c) 2019-2020 Oracle and/or its affiliates.
+// Contributed and/or modified by Adam Wulkiewicz, on behalf of Oracle
 //
 // Use, modification and distribution is subject to the Boost Software License,
 // Version 1.0. (See accompanying file LICENSE_1_0.txt or copy at
@@ -11,28 +15,34 @@
 #ifndef BOOST_GEOMETRY_INDEX_DETAIL_RTREE_NODE_NODE_HPP
 #define BOOST_GEOMETRY_INDEX_DETAIL_RTREE_NODE_NODE_HPP
 
+#include <type_traits>
+
 #include <boost/container/vector.hpp>
+
+#include <boost/geometry/core/static_assert.hpp>
+
 #include <boost/geometry/index/detail/varray.hpp>
 
 #include <boost/geometry/index/detail/rtree/node/concept.hpp>
 #include <boost/geometry/index/detail/rtree/node/pairs.hpp>
-#include <boost/geometry/index/detail/rtree/node/auto_deallocator.hpp>
+#include <boost/geometry/index/detail/rtree/node/node_elements.hpp>
+#include <boost/geometry/index/detail/rtree/node/scoped_deallocator.hpp>
 
-#include <boost/geometry/index/detail/rtree/node/dynamic_visitor.hpp>
-#include <boost/geometry/index/detail/rtree/node/node_d_mem_dynamic.hpp>
-#include <boost/geometry/index/detail/rtree/node/node_d_mem_static.hpp>
+//#include <boost/geometry/index/detail/rtree/node/weak_visitor.hpp>
+//#include <boost/geometry/index/detail/rtree/node/weak_dynamic.hpp>
+//#include <boost/geometry/index/detail/rtree/node/weak_static.hpp>
 
-#include <boost/geometry/index/detail/rtree/node/static_visitor.hpp>
-#include <boost/geometry/index/detail/rtree/node/node_s_mem_dynamic.hpp>
-#include <boost/geometry/index/detail/rtree/node/node_s_mem_static.hpp>
-
-#include <boost/geometry/index/detail/rtree/node/node_auto_ptr.hpp>
+#include <boost/geometry/index/detail/rtree/node/variant_visitor.hpp>
+#include <boost/geometry/index/detail/rtree/node/variant_dynamic.hpp>
+#include <boost/geometry/index/detail/rtree/node/variant_static.hpp>
 
 #include <boost/geometry/algorithms/expand.hpp>
 
+#include <boost/geometry/index/detail/rtree/visitors/destroy.hpp>
 #include <boost/geometry/index/detail/rtree/visitors/is_leaf.hpp>
 
 #include <boost/geometry/index/detail/algorithms/bounds.hpp>
+#include <boost/geometry/index/detail/is_bounding_geometry.hpp>
 
 namespace boost { namespace geometry { namespace index {
 
@@ -40,99 +50,142 @@ namespace detail { namespace rtree {
 
 // elements box
 
-template <typename Box, typename FwdIter, typename Translator>
-inline Box elements_box(FwdIter first, FwdIter last, Translator const& tr)
+template <typename Box, typename FwdIter, typename Translator, typename Strategy>
+inline Box elements_box(FwdIter first, FwdIter last, Translator const& tr,
+                        Strategy const& strategy)
 {
     Box result;
+    
+    // Only here to suppress 'uninitialized local variable used' warning
+    // until the suggestion below is not implemented
+    geometry::assign_inverse(result);
 
+    //BOOST_GEOMETRY_INDEX_ASSERT(first != last, "non-empty range required");
+    // NOTE: this is not elegant temporary solution,
+    //       reference to box could be passed as parameter and bool returned
     if ( first == last )
-    {
-        geometry::assign_inverse(result);
         return result;
-    }
 
-    detail::bounds(element_indexable(*first, tr), result);
+    detail::bounds(element_indexable(*first, tr), result, strategy);
     ++first;
 
     for ( ; first != last ; ++first )
-        geometry::expand(result, element_indexable(*first, tr));
+        detail::expand(result, element_indexable(*first, tr), strategy);
+
+    return result;
+}
+
+// Enlarge bounds of a leaf node WRT epsilon if needed.
+// It's because Points and Segments are compared WRT machine epsilon.
+// This ensures that leafs bounds correspond to the stored elements.
+// NOTE: this is done only if the Indexable is not a Box
+//       in the future don't do it also for NSphere
+template <typename Box, typename FwdIter, typename Translator, typename Strategy>
+inline Box values_box(FwdIter first, FwdIter last, Translator const& tr,
+                      Strategy const& strategy)
+{
+    typedef typename std::iterator_traits<FwdIter>::value_type element_type;
+    BOOST_GEOMETRY_STATIC_ASSERT((is_leaf_element<element_type>::value),
+        "This function should be called only for elements of leaf nodes.",
+        element_type);
+
+    Box result = elements_box<Box>(first, last, tr, strategy);
+
+#ifdef BOOST_GEOMETRY_INDEX_EXPERIMENTAL_ENLARGE_BY_EPSILON
+    if (BOOST_GEOMETRY_CONDITION((
+        ! is_bounding_geometry
+            <
+                typename indexable_type<Translator>::type
+            >::value)))
+    {
+        geometry::detail::expand_by_epsilon(result);
+    }
+#endif
 
     return result;
 }
 
 // destroys subtree if the element is internal node's element
-template <typename Value, typename Options, typename Translator, typename Box, typename Allocators>
+template <typename MembersHolder>
 struct destroy_element
 {
-    typedef typename Options::parameters_type parameters_type;
+    typedef typename MembersHolder::parameters_type parameters_type;
+    typedef typename MembersHolder::allocators_type allocators_type;
 
-    typedef typename rtree::internal_node<Value, parameters_type, Box, Allocators, typename Options::node_tag>::type internal_node;
-    typedef typename rtree::leaf<Value, parameters_type, Box, Allocators, typename Options::node_tag>::type leaf;
+    typedef typename MembersHolder::internal_node internal_node;
+    typedef typename MembersHolder::leaf leaf;
 
-    typedef rtree::node_auto_ptr<Value, Options, Translator, Box, Allocators> node_auto_ptr;
-
-    inline static void apply(typename internal_node::elements_type::value_type & element, Allocators & allocators)
+    inline static void apply(typename internal_node::elements_type::value_type & element,
+                             allocators_type & allocators)
     {
-         node_auto_ptr dummy(element.second, allocators);
+         detail::rtree::visitors::destroy<MembersHolder>::apply(element.second, allocators);
+
          element.second = 0;
     }
 
-    inline static void apply(typename leaf::elements_type::value_type &, Allocators &) {}
+    inline static void apply(typename leaf::elements_type::value_type &,
+                             allocators_type &)
+    {}
 };
 
 // destroys stored subtrees if internal node's elements are passed
-template <typename Value, typename Options, typename Translator, typename Box, typename Allocators>
+template <typename MembersHolder>
 struct destroy_elements
 {
-    typedef typename Options::parameters_type parameters_type;
+    typedef typename MembersHolder::value_type value_type;
+    typedef typename MembersHolder::allocators_type allocators_type;
 
-    typedef typename rtree::internal_node<Value, parameters_type, Box, Allocators, typename Options::node_tag>::type internal_node;
-    typedef typename rtree::leaf<Value, parameters_type, Box, Allocators, typename Options::node_tag>::type leaf;
-
-    typedef rtree::node_auto_ptr<Value, Options, Translator, Box, Allocators> node_auto_ptr;
-
-    inline static void apply(typename internal_node::elements_type & elements, Allocators & allocators)
+    template <typename Range>
+    inline static void apply(Range & elements, allocators_type & allocators)
     {
-        for ( size_t i = 0 ; i < elements.size() ; ++i )
-        {
-            node_auto_ptr dummy(elements[i].second, allocators);
-            elements[i].second = 0;
-        }
+        apply(boost::begin(elements), boost::end(elements), allocators);
     }
 
-    inline static void apply(typename leaf::elements_type &, Allocators &)
-    {}
+    template <typename It>
+    inline static void apply(It first, It last, allocators_type & allocators)
+    {
+        typedef std::is_same
+            <
+                value_type, typename std::iterator_traits<It>::value_type
+            > is_range_of_values;
 
-    inline static void apply(typename internal_node::elements_type::iterator first,
-                             typename internal_node::elements_type::iterator last,
-                             Allocators & allocators)
+        apply_dispatch(first, last, allocators, is_range_of_values());
+    }
+
+private:
+    template <typename It>
+    inline static void apply_dispatch(It first, It last, allocators_type & allocators,
+                                      std::false_type /*is_range_of_values*/)
     {
         for ( ; first != last ; ++first )
         {
-            node_auto_ptr dummy(first->second, allocators);
+            detail::rtree::visitors::destroy<MembersHolder>::apply(first->second, allocators);
+
             first->second = 0;
         }
     }
 
-    inline static void apply(typename leaf::elements_type::iterator /*first*/,
-                             typename leaf::elements_type::iterator /*last*/,
-                             Allocators & /*allocators*/)
+    template <typename It>
+    inline static void apply_dispatch(It /*first*/, It /*last*/, allocators_type & /*allocators*/,
+                                      std::true_type /*is_range_of_values*/)
     {}
 };
 
 // clears node, deletes all subtrees stored in node
-template <typename Value, typename Options, typename Translator, typename Box, typename Allocators>
+/*
+template <typename MembersHolder>
 struct clear_node
 {
-    typedef typename Options::parameters_type parameters_type;
+    typedef typename MembersHolder::parameters_type parameters_type;
+    typedef typename MembersHolder::allocators_type allocators_type;
 
-    typedef typename rtree::node<Value, parameters_type, Box, Allocators, typename Options::node_tag>::type node;
-    typedef typename rtree::internal_node<Value, parameters_type, Box, Allocators, typename Options::node_tag>::type internal_node;
-    typedef typename rtree::leaf<Value, parameters_type, Box, Allocators, typename Options::node_tag>::type leaf;
+    typedef typename MembersHolder::node node;
+    typedef typename MembersHolder::internal_node internal_node;
+    typedef typename MembersHolder::leaf leaf;
 
-    inline static void apply(node & node, Allocators & allocators)
+    inline static void apply(node & node, allocators_type & allocators)
     {
-        rtree::visitors::is_leaf<Value, Options, Box, Allocators> ilv;
+        rtree::visitors::is_leaf<MembersHolder> ilv;
         rtree::apply_visitor(ilv, node);
         if ( ilv.result )
         {
@@ -144,17 +197,18 @@ struct clear_node
         }
     }
 
-    inline static void apply(internal_node & internal_node, Allocators & allocators)
+    inline static void apply(internal_node & internal_node, allocators_type & allocators)
     {
-        destroy_elements<Value, Options, Translator, Box, Allocators>::apply(rtree::elements(internal_node), allocators);
+        destroy_elements<MembersHolder>::apply(rtree::elements(internal_node), allocators);
         rtree::elements(internal_node).clear();
     }
 
-    inline static void apply(leaf & leaf, Allocators &)
+    inline static void apply(leaf & leaf, allocators_type &)
     {
         rtree::elements(leaf).clear();
     }
 };
+*/
 
 template <typename Container, typename Iterator>
 void move_from_back(Container & container, Iterator it)

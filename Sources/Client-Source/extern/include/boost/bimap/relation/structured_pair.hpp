@@ -12,7 +12,7 @@
 #ifndef BOOST_BIMAP_RELATION_STRUCTURED_PAIR_HPP
 #define BOOST_BIMAP_RELATION_STRUCTURED_PAIR_HPP
 
-#if defined(_MSC_VER) && (_MSC_VER>=1200)
+#if defined(_MSC_VER)
 #pragma once
 #endif
 
@@ -254,7 +254,7 @@ class mutant_relation;
 /// \brief A std::pair signature compatible class that allows you to control
 ///        the internal structure of the data.
 /**
-This class allows you to specify the order in wich the two data types will be
+This class allows you to specify the order in which the two data types will be
 in the layout of the class.
                                                                                **/
 
@@ -337,7 +337,7 @@ class structured_pair :
     template< class Tag >
     const BOOST_DEDUCED_TYPENAME ::boost::bimaps::relation::support::
         result_of::get<Tag,const structured_pair>::type
-    get(BOOST_EXPLICIT_TEMPLATE_TYPE(Tag)) const
+    get() const
     {
         return ::boost::bimaps::relation::support::get<Tag>(*this);
     }
@@ -345,7 +345,7 @@ class structured_pair :
     template< class Tag >
     BOOST_DEDUCED_TYPENAME ::boost::bimaps::relation::support::
         result_of::get<Tag,structured_pair>::type
-    get(BOOST_EXPLICIT_TEMPLATE_TYPE(Tag))
+    get()
     {
         return ::boost::bimaps::relation::support::get<Tag>(*this);
     }

@@ -236,7 +236,7 @@ namespace boost
       }
       if (p == 1)
       {
-        return tools::max_value<RealType>(); // x = + infinity.
+        return policies::raise_overflow_error<RealType>(function, 0, Policy()); // x = + infinity.
       }
       result = scale /
         (pow((1 - p), 1 / shape));
@@ -286,7 +286,7 @@ namespace boost
       }
       if (q == 0)
       {
-        return tools::max_value<RealType>(); // x = + infinity.
+         return policies::raise_overflow_error<RealType>(function, 0, Policy()); // x = + infinity.
       }
       result = scale / (pow(q, 1 / shape));
       // K. Krishnamoorthy,  ISBN 1-58488-635-8 eq 23.1.3
@@ -430,6 +430,15 @@ namespace boost
       }
       return result;
     } // kurtosis_excess
+
+    template <class RealType, class Policy>
+    inline RealType entropy(const pareto_distribution<RealType, Policy>& dist)
+    {
+      using std::log;
+      RealType xm = dist.scale();
+      RealType alpha = dist.shape();
+      return log(xm/alpha) + 1 + 1/alpha;
+    }
 
     } // namespace math
   } // namespace boost

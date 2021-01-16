@@ -8,6 +8,7 @@ Copyright (c) 2010-2010: Joachim Faulhaber
 #ifndef BOOST_ICL_CLOSED_INTERVAL_HPP_JOFA_100324
 #define BOOST_ICL_CLOSED_INTERVAL_HPP_JOFA_100324
 
+#include <boost/icl/detail/concept_check.hpp>
 #include <boost/icl/concept/interval.hpp>
 #include <boost/icl/type_traits/value_size.hpp>
 #include <boost/icl/type_traits/type_to_string.hpp>
@@ -83,8 +84,8 @@ struct interval_traits< icl::closed_interval<DomainT, Compare> >
         return interval_type(lo, up);
     }
 
-    static domain_type lower(const interval_type& inter_val){ return inter_val.lower(); };
-    static domain_type upper(const interval_type& inter_val){ return inter_val.upper(); };
+    static domain_type lower(const interval_type& inter_val){ return inter_val.lower(); }
+    static domain_type upper(const interval_type& inter_val){ return inter_val.upper(); }
 };
 
 //==============================================================================

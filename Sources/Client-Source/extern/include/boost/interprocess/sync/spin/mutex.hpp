@@ -11,7 +11,11 @@
 #ifndef BOOST_INTERPROCESS_DETAIL_SPIN_MUTEX_HPP
 #define BOOST_INTERPROCESS_DETAIL_SPIN_MUTEX_HPP
 
-#if (defined _MSC_VER) && (_MSC_VER >= 1200)
+#ifndef BOOST_CONFIG_HPP
+#  include <boost/config.hpp>
+#endif
+#
+#if defined(BOOST_HAS_PRAGMA_ONCE)
 #  pragma once
 #endif
 
@@ -22,7 +26,7 @@
 #include <boost/interprocess/detail/atomic.hpp>
 #include <boost/cstdint.hpp>
 #include <boost/interprocess/detail/os_thread_functions.hpp>
-#include <boost/interprocess/sync/spin/wait.hpp>
+#include <boost/interprocess/sync/detail/common_algorithms.hpp>
 
 namespace boost {
 namespace interprocess {
@@ -41,9 +45,26 @@ class spin_mutex
    bool try_lock();
    bool timed_lock(const boost::posix_time::ptime &abs_time);
    void unlock();
-   void take_ownership(){};
+   void take_ownership(){}
    private:
    volatile boost::uint32_t m_s;
+
+   struct common_lock_wrapper
+   {
+      common_lock_wrapper(spin_mutex &sp)
+         : m_sp(sp)
+      {}
+
+      void lock()
+      {
+         ipcdetail::try_based_lock(m_sp);
+      }
+
+      bool timed_lock(const boost::posix_time::ptime &abs_time)
+      {  return m_sp.timed_lock(abs_time);   }
+
+      spin_mutex &m_sp;
+   };
 };
 
 inline spin_mutex::spin_mutex()
@@ -61,16 +82,8 @@ inline spin_mutex::~spin_mutex()
 
 inline void spin_mutex::lock(void)
 {
-   spin_wait swait;
-   do{
-      boost::uint32_t prev_s = ipcdetail::atomic_cas32(const_cast<boost::uint32_t*>(&m_s), 1, 0);
-
-      if (m_s == 1 && prev_s == 0){
-            break;
-      }
-      // relinquish current timeslice
-      swait.yield();
-   }while (true);
+   common_lock_wrapper clw(*this);
+   ipcdetail::timeout_when_locking_aware_lock(clw);
 }
 
 inline bool spin_mutex::try_lock(void)
@@ -80,30 +93,7 @@ inline bool spin_mutex::try_lock(void)
 }
 
 inline bool spin_mutex::timed_lock(const boost::posix_time::ptime &abs_time)
-{
-   if(abs_time == boost::posix_time::pos_infin){
-      this->lock();
-      return true;
-   }
-   //Obtain current count and target time
-   boost::posix_time::ptime now = microsec_clock::universal_time();
-
-   spin_wait swait;
-   do{
-      if(this->try_lock()){
-         break;
-      }
-      now = microsec_clock::universal_time();
-
-      if(now >= abs_time){
-         return false;
-      }
-      // relinquish current time slice
-      swait.yield();
-   }while (true);
-
-   return true;
-}
+{  return ipcdetail::try_based_timed_lock(*this, abs_time); }
 
 inline void spin_mutex::unlock(void)
 {  ipcdetail::atomic_cas32(const_cast<boost::uint32_t*>(&m_s), 0, 1);   }

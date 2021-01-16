@@ -28,11 +28,11 @@ namespace boost { namespace spirit
     // for uniformity.
     struct info
     {
-        struct nil {};
+        struct nil_ {};
 
         typedef
             boost::variant<
-                nil
+                nil_
               , utf8_string
               , recursive_wrapper<info>
               , recursive_wrapper<std::pair<info, info> >
@@ -41,7 +41,7 @@ namespace boost { namespace spirit
         value_type;
 
         explicit info(utf8_string const& tag_)
-          : tag(tag_), value(nil()) {}
+          : tag(tag_), value(nil_()) {}
 
         template <typename T>
         info(utf8_string const& tag_, T const& value_)
@@ -78,7 +78,7 @@ namespace boost { namespace spirit
         basic_info_walker(Callback& callback_, utf8_string const& tag_, int depth_)
           : callback(callback_), tag(tag_), depth(depth_) {}
 
-        void operator()(info::nil) const
+        void operator()(info::nil_) const
         {
             callback.element(tag, "", depth);
         }
@@ -117,9 +117,8 @@ namespace boost { namespace spirit
         utf8_string const& tag;
         int depth;
 
-    private:
         // silence MSVC warning C4512: assignment operator could not be generated
-        basic_info_walker& operator= (basic_info_walker const&);
+        BOOST_DELETED_FUNCTION(basic_info_walker& operator= (basic_info_walker const&))
     };
 
     // bare-bones print support
@@ -133,7 +132,7 @@ namespace boost { namespace spirit
 
         void element(string const& tag, string const& value, int /*depth*/) const
         {
-            if (value == "")
+            if (value.empty())
                 out << '<' << tag << '>';
             else
                 out << '"' << value << '"';
@@ -141,9 +140,8 @@ namespace boost { namespace spirit
 
         Out& out;
 
-    private:
         // silence MSVC warning C4512: assignment operator could not be generated
-        simple_printer& operator= (simple_printer const&);
+        BOOST_DELETED_FUNCTION(simple_printer& operator= (simple_printer const&))
     };
 
     template <typename Out>

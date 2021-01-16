@@ -1,0 +1,2 @@
+C:\Users\Lead0\Desktop\M2-Gui-Creator\Sources\Client-Source\vs_files\EterBase\Debug\EterBase.lib
+C:\Users\Lead0\Desktop\M2-Gui-Creator\Sources\Client-Source\vs_files\EterBase\Debug\EterBase.pdb
