@@ -1,0 +1,27 @@
+0311 14:57:13234 :: CMapOutdoor::Load - LoadMonsterAreaInfo ERROR
+0311 14:58:39070 :: ResourceManager::GetResourcePointer: NOT SUPPORT FILE g:\(주)이미르\3d\천의군법사\천의군법사02.psd
+0311 14:58:44700 :: CInstanceBase::AttachTextTail - VID [26] ALREADY EXIST
+0311 14:59:26067 :: CMapOutdoor::Load - LoadMonsterAreaInfo ERROR
+0311 15:00:36115 :: ResourceManager::GetResourcePointer: NOT SUPPORT FILE g:\(주)이미르\3d\천의군법사\천의군법사02.psd
+0311 15:00:51247 :: CInstanceBase::AttachTextTail - VID [26] ALREADY EXIST
+0311 15:01:30792 :: CMapOutdoor::Load - LoadMonsterAreaInfo ERROR
+0311 15:02:48463 :: CMapOutdoor::Load - LoadMonsterAreaInfo ERROR
+0311 15:02:00677 :: CMapOutdoor::Load - LoadMonsterAreaInfo ERROR
+0311 15:05:10832 :: CMapOutdoor::Load - LoadMonsterAreaInfo ERROR
+0311 15:07:53214 :: CMapOutdoor::Load - LoadMonsterAreaInfo ERROR
+0311 15:07:53759 :: ResourceManager::GetResourcePointer: NOT SUPPORT FILE g:\(주)이미르\3d\천의군법사\천의군법사02.psd
+0311 15:07:13494 :: CMapOutdoor::Load - LoadMonsterAreaInfo ERROR
+0311 15:07:19500 :: CMapOutdoor::Load - LoadMonsterAreaInfo ERROR
+0311 15:07:32897 :: CMapOutdoor::Load - LoadMonsterAreaInfo ERROR
+0311 15:08:51484 :: ResourceManager::GetResourcePointer: NOT SUPPORT FILE g:\(주)이미르\3d\천의군법사\천의군법사02.psd
+0311 15:10:40574 :: CMapOutdoor::Load - LoadMonsterAreaInfo ERROR
+0311 15:10:24194 :: CMapOutdoor::Load - LoadMonsterAreaInfo ERROR
+0311 15:10:24616 :: ResourceManager::GetResourcePointer: NOT SUPPORT FILE g:\(주)이미르\3d\천의군법사\천의군법사02.psd
+0311 15:11:38697 :: CMapOutdoor::Load - LoadMonsterAreaInfo ERROR
+0311 15:15:14123 :: CMapOutdoor::Load - LoadMonsterAreaInfo ERROR
+0311 15:15:14598 :: ResourceManager::GetResourcePointer: NOT SUPPORT FILE g:\(주)이미르\3d\천의군법사\천의군법사02.psd
+0311 15:15:27716 :: CMapOutdoor::Load - LoadMonsterAreaInfo ERROR
+0311 15:18:24692 :: CMapOutdoor::Load - LoadMonsterAreaInfo ERROR
+0311 15:18:25221 :: ResourceManager::GetResourcePointer: NOT SUPPORT FILE g:\(주)이미르\3d\천의군법사\천의군법사02.psd
+0311 15:20:11479 :: CMapOutdoor::Load - LoadMonsterAreaInfo ERROR
+0311 15:21:05391 :: GRANNY: r:/granny/rt/granny_file_info.cpp(145): File has run-time type tag of 0x8000000f, which doesn't match this version of Granny (0x80000010).  Automatic conversion will be attempted.

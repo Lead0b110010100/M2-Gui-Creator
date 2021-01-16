@@ -1,0 +1,15 @@
+*.epk
+*.eix
+
+*.ipch
+*.db
+*.iobj
+*.ipdb
+*.tlog
+*.pdb
+*.pch
+*.suo
+*.obj
+*.sbr
+*.cod
+*.log

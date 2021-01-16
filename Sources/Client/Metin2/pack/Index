@@ -1,0 +1,133 @@
+PACK
+*
+season
+*
+maps2
+*
+bgm
+*
+maps
+*
+reichschlacht
+d:/ymir work/pc/
+pc
+d:/ymir work/pc2/
+pc2
+d:/ymir work/monster/
+monster
+d:/ymir work/monster2/
+monster
+d:/ymir work/effect/
+effect
+d:/ymir work/zone/
+zone
+d:/ymir work/terrainmaps/
+terrain
+d:/ymir work/npc/
+npc
+d:/ymir work/npc2/
+npc
+d:/ymir work/tree/
+tree
+d:/ymir work/guild/
+guild
+d:/ymir work/item/
+item
+textureset/
+textureset
+property/
+property
+icon/
+icon
+season1/
+season
+season2/
+season
+metin2_map_a1/
+map1
+map_a2/
+maps
+metin2_map_a3/
+map2
+metin2_map_b1/
+map1
+metin2_map_b3/
+map2
+metin2_map_c1/
+map1
+metin2_map_c3/
+map2
+map_n_snowm_01/
+maps
+metin2_map_n_desert_01/
+maps
+metin2_map_n_flame_01/
+maps
+map_b_fielddungeon/
+maps
+metin2_map_t1/
+gildenkrieg
+metin2_map_t2/
+gildenkrieg
+metin2_map_t3/
+gildenkrieg
+metin2_map_t4/
+gildenkrieg
+metin2_map_wedding_01/
+maps
+metin2_map_milgyo/
+maps2
+metin2_map_spiderdungeon/
+maps
+metin2_map_deviltower1/
+maps
+metin2_map_monkeydungeon/
+maps2
+metin2_map_monkeydungeon_02/
+maps2
+metin2_map_monkeydungeon_03/
+maps2
+metin2_map_trent02/ 
+maps
+metin2_map_guild_01/
+maps2
+metin2_map_guild_02/
+maps2
+metin2_map_guild_03/
+maps2
+metin2_map_trent/
+maps
+metin2_map_trent02/
+maps
+metin2_map_duel/
+maps
+gm_guild_build/
+maps
+sound/ambience/
+sound
+sound/common/
+sound
+sound/effect/
+sound
+sound/monster/
+sound
+sound/npc/
+sound
+sound/pc/
+sound
+sound/ui/
+sound
+sound/monster2/
+sound
+sound/pc2/
+sound
+d:/ymir work/special/
+etc
+d:/ymir work/environment/
+etc
+d:/ymir work/ui/
+etc
+locale/de/
+locale_de
+uiscript/
+uiscript

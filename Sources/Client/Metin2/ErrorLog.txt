@@ -1,0 +1,28 @@
+Module Name: D:\Metin2\Client V4\Metin2Distribute.exe
+Time Stamp: 0x58bdaa08 - (null)
+
+Exception Type: 0xc0000005
+
+eax: 0x027900c7	ebx: 0x006e3c18
+ecx: 0xfffdf0c7	edx: 0xffffffff
+esi: 0x027b1000	edi: 0x26f59f78
+ebp: 0x0019e980	esp: 0x0019e964
+
+0x005c678a	D:\Metin2\Client V4\Metin2Distribute.exe
+0x0054c2bf	D:\Metin2\Client V4\Metin2Distribute.exe
+0x0054c575	D:\Metin2\Client V4\Metin2Distribute.exe
+0x00536f2b	D:\Metin2\Client V4\Metin2Distribute.exe
+0x00536ad1	D:\Metin2\Client V4\Metin2Distribute.exe
+0x005352fe	D:\Metin2\Client V4\Metin2Distribute.exe
+0x00588a56	D:\Metin2\Client V4\Metin2Distribute.exe
+0x00570b35	D:\Metin2\Client V4\Metin2Distribute.exe
+0x00570e92	D:\Metin2\Client V4\Metin2Distribute.exe
+0x0049e25f	D:\Metin2\Client V4\Metin2Distribute.exe
+0x1e04cf4c	D:\Metin2\Client V4\python22.dll
+0x458d08ec	
+0x006a50f8	D:\Metin2\Client V4\Metin2Distribute.exe
+0xe80c75ff	
+0x7461446d	C:\WINDOWS\System32\WS2_32.dll
+0x7461446d	C:\WINDOWS\System32\WS2_32.dll
+0x40404061	
+
