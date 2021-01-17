@@ -1,0 +1,129 @@
+ScriptType            RaceDataScript
+
+BaseModelFileName     "d:/ymir work/pc3/wolfman/wolfman_novice.GR2"
+
+Group HairData
+{
+	PathName	"d:/ymir Work/pc3/wolfman/"
+
+	HairDataCount 			1
+	Group HairData00
+	{	
+		HairIndex			0
+		Model				"hair/hair_01_1.gr2"
+		SourceSkin			"hair/hair_01_1.dds"
+		TargetSkin			"hair/hair_01_1.dds"
+	}
+}
+
+Group ShapeData
+{
+	PathName	"d:/ymir Work/pc3/wolfman/"
+
+	ShapeDataCount			17
+	Group ShapeData00
+	{
+		ShapeIndex			0
+
+		Model				"wolfman_novice.gr2"
+		SourceSkin			"wolfman_novice.dds"
+		TargetSkin			"wolfman_novice.dds"
+	}
+	Group ShapeData01
+	{
+		ShapeIndex			1
+		Model				"wolfman_novice.gr2"
+		SourceSkin			"wolfman_novice_red.dds"
+		TargetSkin			"wolfman_novice_blue.dds"
+	}
+	Group ShapeData02
+	{
+		ShapeIndex			3
+		Model				"wolfman_3_1.GR2"
+		SourceSkin			"wolfman_3_1.dds"
+		TargetSkin			"wolfman_3_1.dds"
+	}
+	Group ShapeData03
+	{
+		ShapeIndex			4
+		Model				"wolfman_3_1.GR2"
+		SourceSkin			"wolfman_3_1.dds"
+		TargetSkin			"wolfman_3_2.dds"
+	}
+	Group ShapeData04
+	{
+		ShapeIndex			5
+		Model				"wolfman_3_1.GR2"
+		SourceSkin			"wolfman_3_1.dds"
+		TargetSkin			"wolfman_3_3.dds"
+	}
+	Group ShapeData05
+	{
+		ShapeIndex			6
+		Model				"wolfman_4_1.GR2"
+		SourceSkin			"wolfman_4_1.dds"
+		TargetSkin			"wolfman_4_1.dds"
+	}
+	Group ShapeData06
+	{
+		ShapeIndex			7
+		Model				"wolfman_4_1.GR2"
+		SourceSkin			"wolfman_4_1.dds"
+		TargetSkin			"wolfman_4_2.dds"
+	}
+	Group ShapeData07
+	{
+		ShapeIndex			8
+		Model				"wolfman_4_3.GR2"
+		SourceSkin			"wolfman_4_3.dds"
+		TargetSkin			"wolfman_4_3.dds"
+	}
+	Group ShapeData08
+	{
+		ShapeIndex			9
+		Model				"wolfman_5_1.gr2"
+		SourceSkin			"wolfman_5_1.dds"
+		TargetSkin			"wolfman_5_1.dds"
+	}
+}
+
+Group AttachingData
+{
+    AttachingDataCount       2
+    
+    Group AttachingData00
+    {
+        AttachingDataType    1
+        
+        isAttaching          0
+        AttachingModelIndex  0
+        AttachingBoneName    "Bip01"
+        
+        CollisionType        1
+        
+        SphereDataCount      1
+        Group SphereData00
+        {
+            Radius           40.000000
+            Position         0.000000 0.000000 100.000000
+        }
+    }
+    
+    Group AttachingData01
+    {
+        AttachingDataType    1
+        
+        isAttaching          0
+        AttachingModelIndex  0
+        AttachingBoneName    "Bip01"
+        
+        CollisionType        3
+        
+        SphereDataCount      1
+        Group SphereData00
+        {
+            Radius           70.000000
+            Position         0.000000 0.000000 100.000000
+        }
+    }
+}
